@@ -209,7 +209,7 @@ exec-once = waybar & kitty
 ################
 
 # See https://wiki.hyprland.org/Configuring/Monitors/
-monitor=,preferred,auto,auto
+monitor=,preferred,auto,1
 
 
 ###################
