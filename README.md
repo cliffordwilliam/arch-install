@@ -44,3 +44,10 @@ nmtui
 
 1. pick "Activate a connection"
 2. pick "Quit"
+
+## After postinstall
+
+```bash
+sudo chown -R cliff:cliff /home/cliff
+Hyprland
+```
