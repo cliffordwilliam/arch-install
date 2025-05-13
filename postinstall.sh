@@ -158,7 +158,8 @@ cat << 'EOF' > ~/.config/waybar/style.css
   },
 
   "memory": {
-    "format": "RAM {used:0.1f}G",
+    "format": "RAM {percentage}%",
+    "exec": "free | awk '/^Mem/ {print $3/$2 * 100.0}'",
     "interval": 5
   },
 
