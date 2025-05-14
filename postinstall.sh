@@ -2,9 +2,11 @@
 set -e
 
 echo "==> Installing essential packages..."
-sudo pacman -S --noconfirm xorg-server xorg-xinit libxft libxinerama libx11 \
-  git base-devel alsa-utils networkmanager qutebrowser \
-  xorg-xbacklight xorg-xrandr xorg-xsetroot xf86-input-libinput xf86-video-intel
+sudo pacman -S --noconfirm \
+  xorg-server xorg-xinit libxft libxinerama libx11 \
+  git base-devel alsa-utils alsa-plugins networkmanager qutebrowser \
+  xorg-xbacklight xorg-xrandr xorg-xsetroot xf86-input-libinput xf86-video-intel \
+  ttf-dejavu
 
 echo "==> Enabling NetworkManager..."
 sudo systemctl enable NetworkManager
@@ -27,7 +29,7 @@ for dir in dwm st dmenu slstatus; do
   sudo make install
 done
 
-echo "==> Creating .xinitrc..."
+echo "==> Creating ~/.xinitrc..."
 cat > ~/.xinitrc <<EOF
 slstatus &
 exec dwm
@@ -35,9 +37,15 @@ EOF
 chmod +x ~/.xinitrc
 
 echo "==> Configuring auto-start of X on TTY1..."
-if ! grep -q "exec startx" ~/.bash_profile 2>/dev/null; then
-  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
+BASH_PROFILE="$HOME/.bash_profile"
+cp "$BASH_PROFILE" "$BASH_PROFILE.bak" 2>/dev/null || true
+
+if ! grep -q "exec startx" "$BASH_PROFILE" 2>/dev/null; then
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> "$BASH_PROFILE"
 fi
+
+# Fix ownership just in case script was run as root at any point
+chown -R "$USER:$USER" ~/suckless
 
 echo "==> Setup complete!"
 echo ""
