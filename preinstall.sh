@@ -27,7 +27,7 @@ echo "[+] Creating swap file..."
 fallocate -l 4G /mnt/swapfile
 chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
-swapon /mnt/swapfile
+# swapon will be done inside chroot
 
 echo "[+] Installing reflector and updating mirrorlist..."
 pacman -Sy --noconfirm reflector
@@ -70,6 +70,7 @@ systemctl enable systemd-timesyncd
 
 echo "[+] Enabling swap..."
 swapon /swapfile
+echo '/swapfile none swap defaults 0 0' >> /etc/fstab
 
 echo "[+] Tuning swappiness..."
 echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
