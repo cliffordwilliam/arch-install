@@ -68,8 +68,7 @@ ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 hwclock --systohc
 
 echo "[+] Generating locale..."
-sed -i "s/^#${LOCALE/s/^#//" /etc/locale.gen
-locale-gen
+sed -i "/^#${LOCALE}/s/^#//" /etc/locale.gen
 echo "LANG=$LOCALE" > /etc/locale.conf
 echo "KEYMAP=us" > /etc/vconsole.conf
 
