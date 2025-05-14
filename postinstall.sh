@@ -46,8 +46,15 @@ for dir in dwm st dmenu slstatus; do
   sudo make install
 done
 
-echo "==> Creating ~/.xinitrc..."
+echo "==> Creating ~/.xinitrc with HDMI1 detection (clamshell mode)..."
 cat > ~/.xinitrc <<EOF
+# Monitor setup: Use HDMI1 if available, otherwise fallback to eDP1
+if xrandr | grep -q "HDMI1 connected"; then
+  xrandr --output HDMI1 --auto --primary --output eDP1 --off
+else
+  xrandr --output eDP1 --auto --primary --output HDMI1 --off
+fi
+
 slstatus &
 exec dwm
 EOF
