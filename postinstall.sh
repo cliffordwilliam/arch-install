@@ -3,7 +3,7 @@ set -e
 
 echo "==> Installing essential packages..."
 sudo pacman -S --noconfirm xorg-server xorg-xinit libxft libxinerama libx11 \
-  git base-devel alsa-utils networkmanager qutebrowser nmtui \
+  git base-devel alsa-utils networkmanager qutebrowser \
   xorg-xbacklight xorg-xrandr xorg-xsetroot xf86-input-libinput xf86-video-intel
 
 echo "==> Enabling NetworkManager..."
