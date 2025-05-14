@@ -16,7 +16,7 @@ USER_PASSWORD="userpassword"  # change this!
 echo "[+] Setting timezone to $TIMEZONE..."
 timedatectl set-timezone "$TIMEZONE"
 
-# --- Initialize pacman keys (if needed) ---
+# --- Initialize pacman keys ---
 echo "[+] Initializing pacman keys..."
 pacman-key --init
 pacman-key --populate archlinux
@@ -37,12 +37,6 @@ echo "[+] Creating swap file..."
 fallocate -l 4G /mnt/swapfile
 chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
-# swapon will be done inside chroot
-
-# --- Update mirrorlist in target system ---
-echo "[+] Installing reflector and updating mirrorlist..."
-pacman -Sy --noconfirm reflector
-reflector --country "Indonesia" --latest 20 --sort rate --save /mnt/etc/pacman.d/mirrorlist
 
 # --- Install base system ---
 echo "[+] Installing base system..."
@@ -51,6 +45,10 @@ pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager sudo vim g
 # --- Generate fstab ---
 echo "[+] Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
+
+# --- Install reflector and update mirrorlist in chroot ---
+echo "[+] Installing reflector in chroot and updating mirrorlist..."
+arch-chroot /mnt bash -c "pacman -Sy --noconfirm reflector && reflector --country 'Indonesia' --latest 20 --sort rate --save /etc/pacman.d/mirrorlist"
 
 # --- Create in-chroot setup script ---
 echo "[+] Creating in-chroot script..."
@@ -70,7 +68,7 @@ ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 hwclock --systohc
 
 echo "[+] Generating locale..."
-sed -i "s/^#\s*$LOCALE UTF-8/\1/" /etc/locale.gen
+sed -i "s/^#\s*${LOCALE//./\\.}/\1/" /etc/locale.gen
 locale-gen
 echo "LANG=$LOCALE" > /etc/locale.conf
 echo "KEYMAP=us" > /etc/vconsole.conf
