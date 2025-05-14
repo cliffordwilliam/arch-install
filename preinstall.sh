@@ -23,6 +23,12 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot/efi
 mount "$EFI" /mnt/boot/efi
 
+echo "[+] Creating swap file..."
+fallocate -l 4G /mnt/swapfile
+chmod 600 /mnt/swapfile
+mkswap /mnt/swapfile
+swapon /mnt/swapfile
+
 echo "[+] Installing reflector and updating mirrorlist..."
 pacman -Sy --noconfirm reflector
 reflector --country "Indonesia" --latest 20 --sort rate --save /etc/pacman.d/mirrorlist
@@ -64,6 +70,12 @@ echo "$HOSTNAME" > /etc/hostname
 echo "[+] Enabling services..."
 systemctl enable NetworkManager
 systemctl enable systemd-timesyncd
+
+echo "[+] Enabling swap..."
+swapon /swapfile
+
+echo "[+] Tuning swappiness..."
+echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
 
 echo "[+] Setting root password..."
 echo "root:$ROOT_PASSWORD" | chpasswd
