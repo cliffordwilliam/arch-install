@@ -87,17 +87,6 @@ useradd -m -G wheel -s /bin/bash "$USERNAME"
 echo "$USERNAME:$USER_PASSWORD" | chpasswd
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-echo "[+] Enabling postinstall to run on first login..."
-mkdir -p /home/$USERNAME/.config/autostart
-cat << 'EOS' > /home/$USERNAME/.bash_profile
-if [ -z "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-  bash ~/postinstall.sh
-fi
-EOS
-chown $USERNAME:$USERNAME /home/$USERNAME/.bash_profile
-chown $USERNAME:$USERNAME /home/$USERNAME/postinstall.sh
-chmod +x /home/$USERNAME/postinstall.sh
-
 echo "[+] Done in chroot."
 EOF
 
