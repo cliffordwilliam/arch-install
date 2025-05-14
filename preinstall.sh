@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --- Configuration ---
 DISK="/dev/nvme0n1"
 EFI="${DISK}p1"
 ROOT="${DISK}p2"
@@ -11,34 +12,47 @@ ROOT_PASSWORD="rootpassword"  # change this!
 USERNAME="cliff"
 USER_PASSWORD="userpassword"  # change this!
 
+# --- Set timezone ---
 echo "[+] Setting timezone to $TIMEZONE..."
 timedatectl set-timezone "$TIMEZONE"
 
+# --- Initialize pacman keys (if needed) ---
+echo "[+] Initializing pacman keys..."
+pacman-key --init
+pacman-key --populate archlinux
+
+# --- Wipe and format disk ---
 echo "[+] Wiping and formatting disk..."
 mkfs.fat -F32 "$EFI"
 mkfs.ext4 "$ROOT"
 
+# --- Mount partitions ---
 echo "[+] Mounting partitions..."
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot/efi
 mount "$EFI" /mnt/boot/efi
 
+# --- Create swap file ---
 echo "[+] Creating swap file..."
 fallocate -l 4G /mnt/swapfile
 chmod 600 /mnt/swapfile
 mkswap /mnt/swapfile
 # swapon will be done inside chroot
 
+# --- Update mirrorlist in target system ---
 echo "[+] Installing reflector and updating mirrorlist..."
 pacman -Sy --noconfirm reflector
-reflector --country "Indonesia" --latest 20 --sort rate --save /etc/pacman.d/mirrorlist
+reflector --country "Indonesia" --latest 20 --sort rate --save /mnt/etc/pacman.d/mirrorlist
 
+# --- Install base system ---
 echo "[+] Installing base system..."
-pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager sudo vim grub efibootmgr
+pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager sudo vim grub efibootmgr man-db man-pages bash-completion
 
+# --- Generate fstab ---
 echo "[+] Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# --- Create in-chroot setup script ---
 echo "[+] Creating in-chroot script..."
 cat > /mnt/root/in-chroot.sh << 'EOF'
 #!/usr/bin/env bash
@@ -56,13 +70,16 @@ ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
 hwclock --systohc
 
 echo "[+] Generating locale..."
-sed -i "s/^#\?$LOCALE UTF-8/$LOCALE UTF-8/" /etc/locale.gen
+sed -i "s/^#\s*$LOCALE UTF-8/\1/" /etc/locale.gen
 locale-gen
 echo "LANG=$LOCALE" > /etc/locale.conf
 echo "KEYMAP=us" > /etc/vconsole.conf
 
 echo "[+] Setting hostname..."
 echo "$HOSTNAME" > /etc/hostname
+
+echo "[+] Configuring pacman..."
+sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 5/' /etc/pacman.conf
 
 echo "[+] Enabling services..."
 systemctl enable NetworkManager
@@ -92,12 +109,15 @@ EOF
 
 chmod +x /mnt/root/in-chroot.sh
 
+# --- Run in-chroot script ---
 echo "[+] Chrooting and continuing setup..."
 arch-chroot /mnt /root/in-chroot.sh "$HOSTNAME" "$TIMEZONE" "$LOCALE" "$USERNAME" "$USER_PASSWORD" "$ROOT_PASSWORD"
 
+# --- Cleanup ---
 echo "[+] Cleaning up..."
 rm /mnt/root/in-chroot.sh
 
+# --- Unmount and reboot ---
 echo "[+] Unmounting and rebooting..."
 umount -Rl /mnt
 reboot
