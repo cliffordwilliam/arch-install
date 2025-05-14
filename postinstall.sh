@@ -1,366 +1,55 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -e
 
-echo "[+] Installing Hyprland and utilities..."
-sudo pacman -S --noconfirm wayland xorg-xwayland hyprland waybar xdg-desktop-portal-hyprland kitty firefox
+echo "==> Installing essential packages..."
+sudo pacman -S --noconfirm xorg-server xorg-xinit libxft libxinerama libx11 \
+  git base-devel alsa-utils networkmanager qutebrowser nmtui \
+  xorg-xbacklight xorg-xrandr xorg-xsetroot xf86-input-libinput xf86-video-intel
 
-echo "[+] Installing PipeWire..."
-sudo pacman -S --noconfirm pipewire wireplumber pipewire-audio pipewire-pulse
-systemctl --user enable --now pipewire pipewire-pulse
-loginctl enable-linger "$USER"
+echo "==> Enabling NetworkManager..."
+sudo systemctl enable NetworkManager
+sudo systemctl start NetworkManager
 
-echo "[+] Installing UFW..."
-sudo pacman -S --noconfirm ufw
-sudo systemctl enable --now ufw
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow http
-sudo ufw allow https
-sudo ufw allow 8080
-sudo ufw enable
+echo "==> Cloning suckless repositories..."
+mkdir -p ~/suckless
+cd ~/suckless
 
-echo "[+] Creating .bashrc..."
-cat << 'EOF' > ~/.bashrc
-alias ls='ls --color=auto'
-alias ll='ls -lah --color=auto'
-alias la='ls -A --color=auto'
-alias grep='grep --color=auto'
-PS1='[\u@\h \W]\$ '
+for repo in dwm st dmenu slstatus; do
+  if [ ! -d "$repo" ]; then
+    git clone https://git.suckless.org/$repo
+  fi
+done
+
+echo "==> Building and installing suckless software..."
+for dir in dwm st dmenu slstatus; do
+  cd ~/suckless/$dir
+  make
+  sudo make install
+done
+
+echo "==> Creating .xinitrc..."
+cat > ~/.xinitrc <<EOF
+slstatus &
+exec dwm
 EOF
+chmod +x ~/.xinitrc
 
-echo "[+] Creating .bash_profile for Hyprland autostart..."
-cat << 'EOF' > ~/.bash_profile
-[[ -f ~/.bashrc ]] && . ~/.bashrc
-if [[ -z \$DISPLAY && \$XDG_VTNR -eq 1 ]]; then
-    exec dbus-run-session Hyprland
+echo "==> Configuring auto-start of X on TTY1..."
+if ! grep -q "exec startx" ~/.bash_profile 2>/dev/null; then
+  echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx' >> ~/.bash_profile
 fi
-EOF
 
-echo "[+] Creating Hyprland config..."
-mkdir -p ~/.config/hypr
-echo "exec-once = waybar" > ~/.config/hypr/hyprland.conf
-
-echo "[+] Creating Kitty config..."
-mkdir -p ~/.config/kitty
-touch ~/.config/kitty/kitty.conf
-
-echo "[+] Fixing ownership..."
-chown -R "$USER:$USER" ~
-
-echo "[+] Removing self from .bash_profile to prevent re-running..."
-sed -i '/postinstall.sh/d' ~/.bash_profile
-rm ~/postinstall.sh
-
-sudo chown -R cliff:cliff /home/cliff
-
-# Overwrite ~/.bashrc
-cat << 'EOF' > ~/.bashrc
-# ~/.bashrc
-
-# If not running interactively, don't do anything
-[[ $- != *i* ]] && return
-
-# Aliases
-alias ls='ls --color=auto'
-alias ll='ls -lah --color=auto'
-alias la='ls -A --color=auto'
-alias grep='grep --color=auto'
-
-# Prompt
-PS1='[\u@\h \W]\$ '
-
-# Default editor
-export EDITOR=nano
-
-# Add local bin to PATH if exists
-if [[ -d "$HOME/.local/bin" ]]; then
-    export PATH="$HOME/.local/bin:$PATH"
-fi
-EOF
-
-# Overwrite ~/.bash_profile
-cat << 'EOF' > ~/.bash_profile
-#
-# ~/.bash_profile
-#
-
-# Source .bashrc if it exists
-[[ -f ~/.bashrc ]] && . ~/.bashrc
-
-# Start Hyprland with dbus-run-session only on TTY1
-if [[ -z $DISPLAY && $XDG_VTNR -eq 1 ]]; then
-    exec dbus-run-session Hyprland
-fi
-EOF
-
-# Create and populate ~/.config/waybar/config.jsonc
-mkdir -p ~/.config/waybar
-cat << 'EOF' > ~/.config/waybar/config.jsonc
-{
-  "layer": "top",
-  "position": "top",
-  "modules-center": ["hyprland/workspaces", "cpu", "memory", "network", "battery", "clock"],
-
-  "hyprland/workspaces": {
-    "format": "{name}",
-    "format-active": "{name}",
-    "format-occupied": "{name}",
-    "format-empty": "{name}",
-    "sort-by": "id"
-  },
-
-  "cpu": {
-    "format": "CPU {usage}%",
-    "interval": 2
-  },
-
-  "memory": {
-    "format": "RAM {used:0.1f}G",
-    "interval": 5
-  },
-
-  "network": {
-    "format-wifi": "WiFi {essid} ({signalStrength}%)",
-    "format-ethernet": "LAN {ipaddr}",
-    "format-disconnected": "Disconnected"
-  },
-
-  "battery": {
-    "format": "BAT {capacity}%",
-    "format-charging": "CHG {capacity}%"
-  },
-
-  "clock": {
-    "format": "{:%H:%M %a %d %b}"
-  }
-}
-EOF
-
-# Create and populate ~/.config/waybar/style.css
-cat << 'EOF' > ~/.config/waybar/style.css
-{
-  "layer": "top",
-  "position": "top",
-  "modules-center": ["hyprland/workspaces", "cpu", "memory", "network", "battery", "clock"],
-
-  "hyprland/workspaces": {
-    "format": "{name}",
-    "format-active": "{name}",
-    "format-occupied": "{name}",
-    "format-empty": "{name}",
-    "sort-by": "id"
-  },
-
-  "cpu": {
-    "format": "CPU {usage}%",
-    "interval": 2
-  },
-
-  "memory": {
-    "format": "RAM {percentage}%",
-    "exec": "free | awk '/^Mem/ {print $3/$2 * 100.0}'",
-    "interval": 5
-  },
-
-  "network": {
-    "format-wifi": "WiFi {essid} ({signalStrength}%)",
-    "format-ethernet": "LAN {ipaddr}",
-    "format-disconnected": "Disconnected"
-  },
-
-  "battery": {
-    "format": "BAT {capacity}%",
-    "format-charging": "CHG {capacity}%"
-  },
-
-  "clock": {
-    "format": "{:%H:%M %a %d %b}"
-  }
-}
-EOF
-
-# Overwrite ~/.config/hypr/hyprland.conf
-mkdir -p ~/.config/hypr
-cat << 'EOF' > ~/.config/hypr/hyprland.conf
-exec-once = waybar & kitty
-
-# #######################################################################################
-# AUTOGENERATED HYPRLAND CONFIG.
-# PLEASE USE THE CONFIG PROVIDED IN THE GIT REPO /examples/hyprland.conf AND EDIT IT,
-# OR EDIT THIS ONE ACCORDING TO THE WIKI INSTRUCTIONS.
-# #######################################################################################
-
-# autogenerated = 1 # remove this line to remove the warning
-
-# This is an example Hyprland config file.
-# Refer to the wiki for more information.
-# https://wiki.hyprland.org/Configuring/
-
-# Please note not all available settings / options are set here.
-# For a full list, see the wiki
-
-# You can split this configuration into multiple files
-# Create your files separately and then link them to this file like this:
-# source = ~/.config/hypr/myColors.conf
-
-
-################
-### MONITORS ###
-################
-
-# See https://wiki.hyprland.org/Configuring/Monitors/
-monitor=,preferred,auto,1
-
-
-###################
-### MY PROGRAMS ###
-###################
-
-# See https://wiki.hyprland.org/Configuring/Keywords/
-
-# Set programs that you use
-$terminal = kitty
-$fileManager = dolphin
-$menu = wofi --show drun
-
-
-#################
-### AUTOSTART ###
-#################
-
-# Autostart necessary processes (like notifications daemons, status bars, etc.)
-# Or execute your favorite apps at launch like this:
-
-# exec-once = $terminal
-# exec-once = nm-applet &
-# exec-once = waybar & hyprpaper & firefox
-
-#############################
-### ENVIRONMENT VARIABLES ###
-#############################
-
-# See https://wiki.hyprland.org/Configuring/Environment-variables/
-
-env = XCURSOR_SIZE,24
-env = HYPRCURSOR_SIZE,24
-
-
-#####################
-### LOOK AND FEEL ###
-#####################
-
-# Refer to https://wiki.hyprland.org/Configuring/Variables/
-
-# https://wiki.hyprland.org/Configuring/Variables/#general
-general {
-    gaps_in = 2
-    gaps_out = 2
-
-    border_size = 1
-
-    # https://wiki.hyprland.org/Configuring/Variables/#variable-types for info about colors
-    col.active_border = rgba(33ccffee) rgba(00ff99ee) 45deg
-    col.inactive_border = rgba(595959aa)
-
-    # Set to true enable resizing windows by clicking and dragging on borders and gaps
-    resize_on_border = false
-
-    # Please see https://wiki.hyprland.org/Configuring/Tearing/ before you turn this on
-    allow_tearing = false
-
-    layout = dwindle
-}
-
-# https://wiki.hyprland.org/Configuring/Variables/#decoration
-decoration {
-    rounding = 8
-    rounding_power = 2
-
-    # Change transparency of focused and unfocused windows
-    active_opacity = 1.0
-    inactive_opacity = 1.0
-
-    shadow {
-        enabled = true
-        range = 4
-        render_power = 3
-        color = rgba(1a1a1aee)
-    }
-
-    # https://wiki.hyprland.org/Configuring/Variables/#blur
-    blur {
-        enabled = true
-        size = 3
-        passes = 1
-
-        vibrancy = 0.1696
-    }
-}
-
-# https://wiki.hyprland.org/Configuring/Variables/#animations
-animations {
-    enabled = yes, please :)
-
-    # Default animations, see https://wiki.hyprland.org/Configuring/Animations/ for more
-
-    bezier = easeOutQuint,0.23,1,0.32,1
-    bezier = easeInOutCubic,0.65,0.05,0.36,1
-    bezier = linear,0,0,1,1
-    bezier = almostLinear,0.5,0.5,0.75,1.0
-    bezier = quick,0.15,0,0.1,1
-
-    animation = global, 1, 10, default
-    animation = border, 1, 5.39, easeOutQuint
-    animation = windows, 1, 4.79, easeOutQuint
-    animation = windowsIn, 1, 4.1, easeOutQuint, popin 87%
-    animation = windowsOut, 1, 1.49, linear, popin 87%
-    animation = fadeIn, 1, 1.73, almostLinear
-    animation = fadeOut, 1, 1.46, almostLinear
-    animation = fade, 1, 3.03, quick
-    animation = layers, 1, 3.81, easeOutQuint
-    animation = layersIn, 1, 4, easeOutQuint, fade
-    animation = layersOut, 1, 1.5, linear, fade
-    animation = fadeLayersIn, 1, 1.79, almostLinear
-    animation = fadeLayersOut, 1, 1.39, almostLinear
-    animation = workspaces, 1, 1.94, almostLinear, fade
-    animation = workspacesIn, 1, 1.21, almostLinear, fade
-    animation = workspacesOut, 1, 1.94, almostLinear, fade
-}
-
-# https://wiki.hyprland.org/Configuring/Variables/#events
-events {
-    global {
-        rule {
-            match = title = "desktop"
-            cmd = hyprpaper -t
-        }
-    }
-}
-
-EOF
-
-# Overwrite ~/.config/kitty/kitty.conf
-mkdir -p ~/.config/kitty
-cat << 'EOF' > ~/.config/kitty/kitty.conf
-# Kitty Configuration
-
-# Font and size
-font_family      Fira Code
-font_size        12.0
-
-# Enable ligatures
-enable_ligatures true
-
-# Window options
-window_padding_width 10
-window_padding_height 10
-
-# Other options
-startup_mode maximize
-EOF
-
-echo "Files have been overwritten successfully!"
-
-
-echo "[+] DONE! Reboot to enjoy Hyprland."
+echo "==> Setup complete!"
+echo ""
+echo "👉 Run 'nmtui' to configure Wi-Fi."
+echo "👉 Run 'alsamixer' to test sound."
+echo "👉 Edit suckless configs in ~/suckless/ and run 'sudo make install' to apply changes."
+echo ""
+echo "🎧 To enable audio keybindings, add the following to dwm/config.h manually:"
+cat <<EOC
+
+// Audio keybindings (requires XF86 keys and alsa-utils)
+{ 0, XF86XK_AudioLowerVolume, spawn, SHCMD("amixer sset Master 5%-") },
+{ 0, XF86XK_AudioRaiseVolume, spawn, SHCMD("amixer sset Master 5%+") },
+{ 0, XF86XK_AudioMute, spawn, SHCMD("amixer sset Master toggle") },
+EOC
