@@ -51,3 +51,25 @@ nmtui
 sudo chown -R cliff:cliff /home/cliff
 Hyprland
 ```
+
+## Add battery to the slstatus
+
+Edit the file
+suckless/slstatus/config.h
+static const struct arg args[] = {
+        /* function format          argument */
+        { battery_perc, "BAT: %s | ", "BAT0" },
+        { datetime, "%s",           "%F %T" },
+};
+
+Go here
+/home/cliff/suckless/slstatus/
+
+Then rebuild
+make clean
+make
+sudo make install
+
+Then restart
+pkill slstatus
+slstatus &
