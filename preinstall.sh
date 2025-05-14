@@ -39,9 +39,6 @@ pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager sudo vim g
 echo "[+] Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
-echo "[+] Copying postinstall script..."
-install -Dm755 postinstall.sh /mnt/home/${USERNAME}/postinstall.sh
-
 echo "[+] Creating in-chroot script..."
 cat > /mnt/root/in-chroot.sh << 'EOF'
 #!/usr/bin/env bash
