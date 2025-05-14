@@ -99,5 +99,5 @@ echo "[+] Cleaning up..."
 rm /mnt/root/in-chroot.sh
 
 echo "[+] Unmounting and rebooting..."
-umount -R /mnt
+umount -Rl /mnt
 reboot
