@@ -1,120 +1,64 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-# --- Configuration ---
+# --- Assumptions ---
 DISK="/dev/nvme0n1"
-EFI="${DISK}p1"
-ROOT="${DISK}p2"
-HOSTNAME="cliff-arch"
+HOSTNAME="cliffarch"
+ROOT_PASSWORD="Intansagara"
 TIMEZONE="Asia/Jakarta"
-LOCALE="en_US.UTF-8"
-ROOT_PASSWORD="rootpassword"  # change this!
-USERNAME="cliff"
-USER_PASSWORD="userpassword"  # change this!
 
-# --- Set timezone ---
-echo "[+] Setting timezone to $TIMEZONE..."
-timedatectl set-timezone "$TIMEZONE"
+echo "=== Partitioning $DISK ==="
+parted --script "$DISK" \
+  mklabel gpt \
+  mkpart ESP fat32 1MiB 1025MiB \
+  set 1 boot on \
+  mkpart primary linux-swap 1025MiB 5121MiB \
+  mkpart primary ext4 5121MiB 100%
 
-# --- Initialize pacman keys ---
-echo "[+] Initializing pacman keys..."
-pacman-key --init
-pacman-key --populate archlinux
+echo "=== Formatting partitions ==="
+mkfs.fat -F 32 "${DISK}p1"
+mkswap "${DISK}p2"
+mkfs.ext4 "${DISK}p3"
 
-# --- Wipe and format disk ---
-echo "[+] Wiping and formatting disk..."
-mkfs.fat -F32 "$EFI"
-mkfs.ext4 "$ROOT"
+echo "=== Mounting partitions ==="
+mount "${DISK}p3" /mnt
+mount --mkdir "${DISK}p1" /mnt/boot
+swapon "${DISK}p2"
 
-# --- Mount partitions ---
-echo "[+] Mounting partitions..."
-mount "$ROOT" /mnt
-mkdir -p /mnt/boot/efi
-mount "$EFI" /mnt/boot/efi
+echo "=== Installing base system ==="
+pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager
 
-# --- Create swap file ---
-echo "[+] Creating swap file..."
-fallocate -l 4G /mnt/swapfile
-chmod 600 /mnt/swapfile
-mkswap /mnt/swapfile
-
-# --- Install base system ---
-echo "[+] Installing base system..."
-pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager sudo vim grub efibootmgr man-db man-pages bash-completion
-
-# --- Generate fstab ---
-echo "[+] Generating fstab..."
+echo "=== Generating fstab ==="
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# --- Install reflector and update mirrorlist in chroot ---
-echo "[+] Installing reflector in chroot and updating mirrorlist..."
-arch-chroot /mnt bash -c "pacman -Sy --noconfirm reflector && reflector --country 'Indonesia' --latest 20 --sort rate --save /etc/pacman.d/mirrorlist"
-
-# --- Create in-chroot setup script ---
-echo "[+] Creating in-chroot script..."
-cat > /mnt/root/in-chroot.sh << 'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-HOSTNAME="$1"
-TIMEZONE="$2"
-LOCALE="$3"
-USERNAME="$4"
-USER_PASSWORD="$5"
-ROOT_PASSWORD="$6"
-
-echo "[+] Setting timezone..."
-ln -sf /usr/share/zoneinfo/"$TIMEZONE" /etc/localtime
+echo "=== Chrooting and configuring ==="
+arch-chroot /mnt /bin/bash <<EOF
+# Timezone
+ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 hwclock --systohc
 
-echo "[+] Generating locale..."
-sed -i "/^#${LOCALE}/s/^#//" /etc/locale.gen
-echo "LANG=$LOCALE" > /etc/locale.conf
-echo "KEYMAP=us" > /etc/vconsole.conf
+# Locale
+sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+locale-gen
 
-echo "[+] Setting hostname..."
+# Hostname
 echo "$HOSTNAME" > /etc/hostname
+cat <<EOL > /etc/hosts
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   $HOSTNAME.localdomain $HOSTNAME
+EOL
 
-echo "[+] Configuring pacman..."
-sed -i 's/^#ParallelDownloads = 5/ParallelDownloads = 5/' /etc/pacman.conf
-
-echo "[+] Enabling services..."
-systemctl enable NetworkManager
-systemctl enable systemd-timesyncd
-
-echo "[+] Enabling swap..."
-swapon /swapfile
-echo '/swapfile none swap defaults 0 0' >> /etc/fstab
-
-echo "[+] Tuning swappiness..."
-echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
-
-echo "[+] Setting root password..."
+# Root password
 echo "root:$ROOT_PASSWORD" | chpasswd
 
-echo "[+] Installing and configuring GRUB..."
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+# Enable networking
+systemctl enable NetworkManager
+
+# Install and configure GRUB
+pacman -Sy --noconfirm grub efibootmgr
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
-
-echo "[+] Creating user '$USERNAME'..."
-useradd -m -G wheel -s /bin/bash "$USERNAME"
-echo "$USERNAME:$USER_PASSWORD" | chpasswd
-sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-
-echo "[+] Done in chroot."
 EOF
 
-chmod +x /mnt/root/in-chroot.sh
-
-# --- Run in-chroot script ---
-echo "[+] Chrooting and continuing setup..."
-arch-chroot /mnt /root/in-chroot.sh "$HOSTNAME" "$TIMEZONE" "$LOCALE" "$USERNAME" "$USER_PASSWORD" "$ROOT_PASSWORD"
-
-# --- Cleanup ---
-echo "[+] Cleaning up..."
-rm /mnt/root/in-chroot.sh
-
-# --- Unmount and reboot ---
-echo "[+] Unmounting and rebooting..."
-umount -Rl /mnt
-reboot
+echo "✅ Arch installation complete! You can now reboot."
