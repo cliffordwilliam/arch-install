@@ -37,6 +37,10 @@ for repo in "${REPOS[@]}"; do
 done
 
 echo "=== Creating .xinitrc to launch dwm ==="
+# Ensure home directory exists
+mkdir -p "$USER_HOME"
+chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
+# Create .xinitrc
 echo "exec dwm" > "$USER_HOME/.xinitrc"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
