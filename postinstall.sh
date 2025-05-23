@@ -1,88 +1,55 @@
 #!/bin/bash
+
+# Exit if any command fails
 set -e
 
-echo "==> Installing essential packages..."
-sudo pacman -S --noconfirm \
-  xorg-server xorg-xinit libxft libxinerama libx11 \
-  git base-devel alsa-utils alsa-plugins networkmanager qutebrowser \
-  xorg-xbacklight xorg-xrandr xorg-xsetroot xf86-input-libinput xf86-video-intel \
-  ttf-dejavu
+TARGET_USER="cliff"
+PASSWORD="Intansagara"
+USER_HOME="/home/$TARGET_USER"
+BUILD_DIR="/tmp/suckless"
+REPOS=("dwm" "dmenu" "st")
+URL_BASE="https://git.suckless.org"
 
-echo "==> Setting up locale..."
-sudo sed -i 's/^#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-sudo locale-gen
-echo "LANG=en_US.UTF-8" | sudo tee /etc/locale.conf > /dev/null
+# Create user 'cliff'
+useradd -m -G wheel -s /bin/bash "$TARGET_USER"
+echo "$TARGET_USER:$PASSWORD" | chpasswd
 
-echo "==> Enabling NetworkManager..."
-sudo systemctl enable NetworkManager
-sudo systemctl start NetworkManager
+# Install sudo
+pacman -S --noconfirm sudo
 
-echo "==> Creating qutebrowser wrapper script with software rendering fix..."
-mkdir -p ~/.local/bin
-cat > ~/.local/bin/qute <<EOF
-#!/bin/bash
-qutebrowser --temp-basedir -d -s qt.force_software_rendering qt-quick "\$@"
-EOF
-chmod +x ~/.local/bin/qute
+# Allow wheel group to use sudo
+sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 
-if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc; then
-  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-fi
+# Install and enable UFW as user 'cliff'
+sudo -u "$TARGET_USER" bash -c "
+  sudo pacman -S --noconfirm ufw
+  sudo ufw enable
+  sudo systemctl enable --now ufw
+"
 
-echo "==> Cloning suckless repositories..."
-mkdir -p ~/suckless
-cd ~/suckless
+# Install base-devel for make
+pacman -S --noconfirm base-devel
 
-for repo in dwm st dmenu slstatus; do
-  if [ ! -d "$repo" ]; then
-    git clone https://git.suckless.org/$repo
-  fi
+# Prepare build directory
+mkdir -p "$BUILD_DIR"
+chown "$TARGET_USER:$TARGET_USER" "$BUILD_DIR"
+
+# Clone, build, and clean up dwm, dmenu, st
+for repo in "${REPOS[@]}"; do
+  sudo -u "$TARGET_USER" bash -c "
+    cd $BUILD_DIR
+    git clone $URL_BASE/$repo
+    cd $repo
+    make clean install
+  "
+  rm -rf "$BUILD_DIR/$repo"
 done
 
-echo "==> Building and installing suckless software..."
-for dir in dwm st dmenu slstatus; do
-  cd ~/suckless/$dir
-  make
-  sudo make install
-done
+# Set up .xinitrc
+echo "exec dwm" > "$USER_HOME/.xinitrc"
+chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 
-echo "==> Creating ~/.xinitrc with HDMI1 detection (clamshell mode)..."
-cat > ~/.xinitrc <<EOF
-# Monitor setup: Use HDMI1 if available, otherwise fallback to eDP1
-if xrandr | grep -q "HDMI1 connected"; then
-  xrandr --output HDMI1 --auto --primary --output eDP1 --off
-else
-  xrandr --output eDP1 --auto --primary --output HDMI1 --off
-fi
+# Clean up
+rmdir "$BUILD_DIR"
 
-slstatus &
-exec dwm
-EOF
-chmod +x ~/.xinitrc
-
-echo "==> Configuring auto-start of X on TTY1..."
-BASH_PROFILE="$HOME/.bash_profile"
-cp "$BASH_PROFILE" "$BASH_PROFILE.bak" 2>/dev/null || true
-
-if ! grep -q "exec startx" "$BASH_PROFILE" 2>/dev/null; then
-  echo '[[ -z \$DISPLAY && \$XDG_VTNR -eq 1 ]] && exec startx' >> "$BASH_PROFILE"
-fi
-
-# Fix ownership just in case script was run as root at any point
-chown -R "$USER:$USER" ~/suckless
-
-echo "==> Setup complete!"
-echo ""
-echo "👉 Run 'nmtui' to configure Wi-Fi."
-echo "👉 Run 'alsamixer' to test sound."
-echo "👉 Use 'qute' instead of 'qutebrowser' to launch with safe defaults."
-echo "👉 Edit suckless configs in ~/suckless/ and run 'sudo make install' to apply changes."
-echo ""
-echo "🎧 To enable audio keybindings, add the following to dwm/config.h manually:"
-cat <<EOC
-
-// Audio keybindings (requires XF86 keys and alsa-utils)
-{ 0, XF86XK_AudioLowerVolume, spawn, SHCMD("amixer sset Master 5%-") },
-{ 0, XF86XK_AudioRaiseVolume, spawn, SHCMD("amixer sset Master 5%+") },
-{ 0, XF86XK_AudioMute, spawn, SHCMD("amixer sset Master toggle") },
-EOC
+echo "Setup complete for user '$TARGET_USER'."
