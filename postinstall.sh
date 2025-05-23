@@ -11,7 +11,7 @@ REPOS=("dwm" "dmenu" "st")
 URL_BASE="https://git.suckless.org"
 
 echo "=== Installing dependencies ==="
-pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxinerama filesystem
+pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxinerama
 
 echo "=== Creating user '$TARGET_USER' ==="
 useradd -m -G wheel -s /bin/bash "$TARGET_USER"
