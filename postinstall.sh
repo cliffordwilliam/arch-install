@@ -1,14 +1,17 @@
 #!/bin/bash
 
-# Exit if any command fails
+# Exit on error
 set -e
 
 TARGET_USER="cliff"
-PASSWORD="Intansagara"
+PASSWORD="intansagara"
 USER_HOME="/home/$TARGET_USER"
 BUILD_DIR="/tmp/suckless"
 REPOS=("dwm" "dmenu" "st")
 URL_BASE="https://git.suckless.org"
+
+# Install git
+pacman -S --noconfirm git
 
 # Create user 'cliff'
 useradd -m -G wheel -s /bin/bash "$TARGET_USER"
