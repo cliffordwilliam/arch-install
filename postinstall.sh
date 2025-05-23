@@ -4,7 +4,7 @@
 set -e
 
 TARGET_USER="cliff"
-PASSWORD="intansagara"
+PASSWORD="Intansagara"
 USER_HOME="/home/$TARGET_USER"
 BUILD_DIR="/tmp/suckless"
 REPOS=("dwm" "dmenu" "st")
