@@ -1,22 +1,22 @@
 # 🧪 Automated Arch Linux Installer
 
-This repo contains a fully automated Arch Linux installation script with Hyprland, PipeWire, and UFW pre-configured.
+Just run the script and it does everything for you.
 
 ## ⚠️ Warning
 
-Change the default passwords in `preinstall.sh` before using this script!
+Check the script and edit the content before running it as needed.
 
 ---
 
 ## 🚀 How to Use
 
 1. Boot from the official [Arch ISO](https://archlinux.org/download/).
-2. Connect to the internet (Wi-Fi or Ethernet).
+2. Connect to the internet.
 3. Run preinstall in live env, run postinstall after logging in:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/arch-install/main/preinstall.sh
-curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/arch-install/main/postinstall.sh
+curl -LO https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/preinstall.sh
+curl -LO https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/postinstall.sh
 chmod +x preinstall.sh
 bash -x preinstall.sh
 ```
@@ -48,28 +48,7 @@ nmtui
 ## After postinstall
 
 ```bash
-sudo chown -R cliff:cliff /home/cliff
-Hyprland
+login as user
+startx to start ui
 ```
 
-## Add battery to the slstatus
-
-Edit the file
-suckless/slstatus/config.h
-static const struct arg args[] = {
-        /* function format          argument */
-        { battery_perc, "BAT: %s | ", "BAT0" },
-        { datetime, "%s",           "%F %T" },
-};
-
-Go here
-/home/cliff/suckless/slstatus/
-
-Then rebuild
-make clean
-make
-sudo make install
-
-Then restart
-pkill slstatus
-slstatus &
