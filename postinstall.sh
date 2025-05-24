@@ -14,10 +14,7 @@ echo "=== Installing dependencies ==="
 pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxinerama
 
 echo "=== Installing audio and browser packages ==="
-pacman -S --noconfirm alsa-utils pipewire pipewire-pulse wireplumber firefox
-
-echo "=== Enabling audio services ==="
-systemctl enable --now pipewire pipewire-pulse wireplumber
+pacman -S --noconfirm alsa-utils firefox
 
 echo "=== Creating user '$TARGET_USER' ==="
 useradd -m -G wheel -s /bin/bash "$TARGET_USER"
