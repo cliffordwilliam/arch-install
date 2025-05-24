@@ -16,6 +16,9 @@ pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxin
 echo "=== Installing audio and browser packages ==="
 pacman -S --noconfirm alsa-utils firefox
 
+echo "=== Installing vim ==="
+pacman -S --noconfirm vim
+
 echo "=== Creating user '$TARGET_USER' ==="
 useradd -m -G wheel -s /bin/bash "$TARGET_USER"
 echo "$TARGET_USER:$PASSWORD" | chpasswd
