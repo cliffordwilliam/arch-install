@@ -20,6 +20,13 @@ echo "$TARGET_USER:$PASSWORD" | chpasswd
 echo "=== Enabling sudo for wheel group ==="
 sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 
+echo "=== Setting up firewall ==="
+pacman -S --noconfirm ufw
+systemctl enable --now ufw
+ufw default deny incoming
+ufw default allow outgoing
+ufw enable
+
 echo "=== Setting up build directory ==="
 mkdir -p "$BUILD_DIR"
 chown "$TARGET_USER:$TARGET_USER" "$BUILD_DIR"
@@ -36,12 +43,29 @@ for repo in "${REPOS[@]}"; do
   rm -rf "$BUILD_DIR/$repo"
 done
 
+echo "=== Creating custom battery/time status script ==="
+cat <<'EOF' > "$USER_HOME/.custom-dwm-status.sh"
+#!/bin/bash
+
+while true; do
+  BAT=$(cat /sys/class/power_supply/BAT0/capacity)
+  STATUS=$(cat /sys/class/power_supply/BAT0/status)
+  TIME=$(date '+%a %H:%M')
+
+  xsetroot -name "BAT: $BAT% ($STATUS) | $TIME"
+  sleep 60
+done
+EOF
+
+chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.custom-dwm-status.sh"
+chmod +x "$USER_HOME/.custom-dwm-status.sh"
+
 echo "=== Creating .xinitrc to launch dwm ==="
 # Ensure home directory exists
 mkdir -p "$USER_HOME"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
 # Create .xinitrc
-echo "exec dwm" > "$USER_HOME/.xinitrc"
+printf "%s\n" "~/.custom-dwm-status.sh &" "exec dwm" > "$USER_HOME/.xinitrc"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
 
