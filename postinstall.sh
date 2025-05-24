@@ -13,6 +13,12 @@ URL_BASE="https://git.suckless.org"
 echo "=== Installing dependencies ==="
 pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxinerama
 
+echo "=== Installing audio and browser packages ==="
+pacman -S --noconfirm alsa-utils pipewire-pulse wireplumber firefox
+
+echo "=== Enabling audio services ==="
+systemctl enable --now pipewire pipewire-pulse wireplumber
+
 echo "=== Creating user '$TARGET_USER' ==="
 useradd -m -G wheel -s /bin/bash "$TARGET_USER"
 echo "$TARGET_USER:$PASSWORD" | chpasswd
@@ -68,6 +74,10 @@ chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
 printf "%s\n" "~/.custom-dwm-status.sh &" "exec dwm" > "$USER_HOME/.xinitrc"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
+
+echo "=== Setting volume to 50% and unmuting ==="
+sudo -u "$TARGET_USER" amixer sset Master 50%
+sudo -u "$TARGET_USER" amixer sset Master unmute
 
 echo "=== Cleaning up ==="
 rmdir "$BUILD_DIR"
