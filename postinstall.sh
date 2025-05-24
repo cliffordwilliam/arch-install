@@ -73,10 +73,10 @@ chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
 
 echo "=== Setting volume to 50% and unmuting ==="
-sudo -u "$TARGET_USER" amixer sset Master 50%
-sudo -u "$TARGET_USER" amixer sset Master unmute
+amixer sset Master 50%
+amixer sset Master unmute
 
 echo "=== Cleaning up ==="
 rmdir "$BUILD_DIR"
 
-echo "✅ Setup complete."
+echo "✅ Setup complete. Reboot and login as $TARGET_USER"
