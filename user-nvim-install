@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Install required packages
+sudo pacman -S --noconfirm xclip neovim
+
+# Create Neovim config directory
+mkdir -p ~/.config/nvim
+
+# Write the Lua config file
+cat <<EOF > ~/.config/nvim/init.lua
+vim.cmd("syntax on")
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.clipboard = "unnamedplus"
+EOF
+
+echo "✅ Neovim setup complete!"
