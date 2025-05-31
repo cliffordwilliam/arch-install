@@ -7,7 +7,7 @@ TARGET_USER="cliff"
 PASSWORD="Intansagara"
 USER_HOME="/home/$TARGET_USER"
 BUILD_DIR="/tmp/suckless"
-REPOS=("dwm" "dmenu" "st")
+REPOS=("dwm" "st")
 URL_BASE="https://git.suckless.org"
 
 echo "=== Installing dependencies ==="
