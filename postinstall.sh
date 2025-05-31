@@ -10,7 +10,7 @@ BUILD_DIR="/tmp/suckless"
 REPOS=("dwm" "st")
 URL_BASE="https://git.suckless.org"
 
-echo "=== Installing dependencies ==="
+echo "=== Installing dependencies for suckless ==="
 pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxinerama
 
 echo "=== Installing audio and browser packages ==="
