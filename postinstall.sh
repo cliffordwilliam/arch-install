@@ -53,7 +53,7 @@ cat <<'EOF' > "$USER_HOME/.custom-dwm-status.sh"
 while true; do
   BAT=$(cat /sys/class/power_supply/BAT0/capacity)
   STATUS=$(cat /sys/class/power_supply/BAT0/status)
-  TIME=$(date '+%a %H:%M')
+  TIME=$(date '+%a %b %d %Y %H:%M')
 
   xsetroot -name "BAT: $BAT% ($STATUS) | $TIME"
   sleep 60
