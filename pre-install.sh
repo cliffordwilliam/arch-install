@@ -8,6 +8,10 @@ read -s -p "Enter password for root $HOSTNAME: " ROOT_PASSWORD
 echo
 TIMEZONE="Asia/Jakarta"
 
+echo "=== Cleaning up any previous mounts ==="
+umount -R /mnt 2>/dev/null || true
+swapoff "${DISK}p2" 2>/dev/null || true
+
 echo "=== Partitioning $DISK ==="
 parted --script "$DISK" \
   mklabel gpt \
@@ -30,7 +34,7 @@ echo "=== Installing base system ==="
 pacstrap -K /mnt base linux linux-firmware intel-ucode networkmanager
 
 echo "=== Generating fstab ==="
-genfstab -U /mnt >> /mnt/etc/fstab
+genfstab -U /mnt > /mnt/etc/fstab
 
 echo "=== Chrooting and configuring ==="
 arch-chroot /mnt /bin/bash <<EOF
