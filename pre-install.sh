@@ -3,8 +3,9 @@ set -euo pipefail
 
 # --- Assumptions ---
 DISK="/dev/nvme0n1"
-HOSTNAME="cliffarch"
-ROOT_PASSWORD="Intansagara"
+read -p "Enter name for root: " HOSTNAME
+read -s -p "Enter password for root $HOSTNAME: " ROOT_PASSWORD
+echo
 TIMEZONE="Asia/Jakarta"
 
 echo "=== Partitioning $DISK ==="
