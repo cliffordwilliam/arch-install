@@ -36,6 +36,16 @@ if [ "$SKIP_USER_SETUP" = false ]; then
   sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 fi
 
+# Ensure home directory exists and owned by user
+mkdir -p "$USER_HOME"
+chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
+
+echo "=== Preparing .config directory for user $TARGET_USER ==="
+sudo -u "$TARGET_USER" mkdir -p "$USER_HOME/.config"
+
+echo "=== Cloning kickstart.nvim config for user $TARGET_USER ==="
+sudo -u "$TARGET_USER" git clone --depth 1 https://github.com/nvim-lua/kickstart.nvim.git "$USER_HOME/.config/nvim"
+
 echo "=== Setting up firewall ==="
 pacman -S --noconfirm ufw
 systemctl enable --now ufw
@@ -73,8 +83,6 @@ while true; do
   sleep 60
 done
 EOF
-
-chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.custom-dwm-status.sh"
 chmod +x "$USER_HOME/.custom-dwm-status.sh"
 
 echo "=== Installing feh for wallpaper ==="
@@ -83,7 +91,6 @@ WALLPAPER_URL="https://raw.githubusercontent.com/cliffordwilliam/arch-install/ma
 WALLPAPER_PATH="$USER_HOME/wallpaper.jpg"
 echo "Downloading wallpaper..."
 curl -L "$WALLPAPER_URL" -o "$WALLPAPER_PATH"
-chown "$TARGET_USER:$TARGET_USER" "$WALLPAPER_PATH"
 
 echo "=== Creating picom config ==="
 mkdir -p "$USER_HOME/.config/picom"
@@ -95,24 +102,21 @@ opacity-rule = [
   "80:class_g = 'st-256color'",
 ];
 EOF
-chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/.config/picom"
 
 echo "=== Creating .xinitrc to launch dwm ==="
-# Ensure home directory exists
-mkdir -p "$USER_HOME"
-chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
-# Create .xinitrc
 printf "%s\n" \
   "feh --bg-scale \"$WALLPAPER_PATH\" &" \
   "picom &" \
   "~/.custom-dwm-status.sh &" \
   "exec dwm" > "$USER_HOME/.xinitrc"
-chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
 
 echo "=== Setting volume to 50% and unmuting ==="
 amixer sset Master 50%
 amixer sset Master unmute
+
+echo "=== Fixing ownership of user files ==="
+chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME"
 
 echo "=== Cleaning up ==="
 rm -rf "$BUILD_DIR"
