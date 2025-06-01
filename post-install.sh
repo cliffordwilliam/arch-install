@@ -20,6 +20,9 @@ pacman -S --noconfirm alsa-utils firefox
 echo "=== Installing picom compositor ==="
 pacman -S --noconfirm picom
 
+echo "=== Installing nvim ==="
+pacman -S --noconfirm neovim
+
 echo "=== Creating user '$TARGET_USER' if we have not made user yet ==="
 if id "$TARGET_USER" &>/dev/null; then
   echo "User $TARGET_USER already exists. Skipping user creation and sudo setup."
