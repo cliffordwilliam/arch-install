@@ -3,8 +3,9 @@
 # Exit on error
 set -e
 
-TARGET_USER="cliff"
-PASSWORD="Intansagara"
+read -p "Enter name for user: " TARGET_USER
+read -s -p "Enter password for user $TARGET_USER: " PASSWORD
+echo
 USER_HOME="/home/$TARGET_USER"
 BUILD_DIR="/tmp/suckless"
 REPOS=("dwm" "st")
@@ -16,12 +17,24 @@ pacman -Syu --noconfirm git base-devel sudo xorg xorg-xinit libx11 libxft libxin
 echo "=== Installing audio and browser packages ==="
 pacman -S --noconfirm alsa-utils firefox
 
-echo "=== Creating user '$TARGET_USER' ==="
-useradd -m -G wheel -s /bin/bash "$TARGET_USER"
-echo "$TARGET_USER:$PASSWORD" | chpasswd
+echo "=== Installing picom compositor ==="
+pacman -S --noconfirm picom
 
-echo "=== Enabling sudo for wheel group ==="
-sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
+echo "=== Creating user '$TARGET_USER' if we have not made user yet ==="
+if id "$TARGET_USER" &>/dev/null; then
+  echo "User $TARGET_USER already exists. Skipping user creation and sudo setup."
+  SKIP_USER_SETUP=true
+else
+  SKIP_USER_SETUP=false
+fi
+if [ "$SKIP_USER_SETUP" = false ]; then
+  echo "=== Creating user '$TARGET_USER' ==="
+  useradd -m -G wheel -s /bin/bash "$TARGET_USER"
+  echo "$TARGET_USER:$PASSWORD" | chpasswd
+
+  echo "=== Enabling sudo for wheel group ==="
+  sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
+fi
 
 echo "=== Setting up firewall ==="
 pacman -S --noconfirm ufw
@@ -31,6 +44,7 @@ ufw default allow outgoing
 ufw enable
 
 echo "=== Setting up build directory ==="
+rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 chown "$TARGET_USER:$TARGET_USER" "$BUILD_DIR"
 
@@ -63,12 +77,36 @@ EOF
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.custom-dwm-status.sh"
 chmod +x "$USER_HOME/.custom-dwm-status.sh"
 
+echo "=== Installing feh for wallpaper ==="
+pacman -S --noconfirm feh
+WALLPAPER_URL="https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/wallpaper.jpg"
+WALLPAPER_PATH="$USER_HOME/wallpaper.jpg"
+echo "Downloading wallpaper..."
+curl -L "$WALLPAPER_URL" -o "$WALLPAPER_PATH"
+chown "$TARGET_USER:$TARGET_USER" "$WALLPAPER_PATH"
+
+echo "=== Creating picom config ==="
+mkdir -p "$USER_HOME/.config/picom"
+cat << 'EOF' > "$USER_HOME/.config/picom/picom.conf"
+backend = "glx";
+vsync = true;
+
+opacity-rule = [
+  "80:class_g = 'st-256color'",
+];
+EOF
+chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/.config/picom"
+
 echo "=== Creating .xinitrc to launch dwm ==="
 # Ensure home directory exists
 mkdir -p "$USER_HOME"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME"
 # Create .xinitrc
-printf "%s\n" "~/.custom-dwm-status.sh &" "exec dwm" > "$USER_HOME/.xinitrc"
+printf "%s\n" \
+  "feh --bg-scale \"$WALLPAPER_PATH\" &" \
+  "picom &" \
+  "~/.custom-dwm-status.sh &" \
+  "exec dwm" > "$USER_HOME/.xinitrc"
 chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
 
@@ -77,6 +115,6 @@ amixer sset Master 50%
 amixer sset Master unmute
 
 echo "=== Cleaning up ==="
-rmdir "$BUILD_DIR"
+rm -rf "$BUILD_DIR"
 
 echo "✅ Setup complete. Reboot and login as $TARGET_USER"
