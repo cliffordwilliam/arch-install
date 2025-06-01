@@ -21,7 +21,7 @@ echo "=== Installing picom compositor ==="
 pacman -S --noconfirm picom
 
 echo "=== Installing nvim ==="
-pacman -S --noconfirm neovim
+pacman -S --noconfirm neovim xclip
 
 echo "=== Creating user '$TARGET_USER' if we have not made user yet ==="
 if id "$TARGET_USER" &>/dev/null; then
