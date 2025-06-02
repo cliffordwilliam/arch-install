@@ -22,19 +22,15 @@ read -p "Enter the Git email for this account: " git_email
 mkdir -p "$account_dir"
 echo "Created or found directory: $account_dir"
 
-# Generate SSH key
+# Generate SSH key if not exists
 if [ -f "$ssh_key" ]; then
   echo "SSH key already exists: $ssh_key"
 else
-  ssh-keygen -t ed25519 -C "$git_email" -f "$ssh_key"
-  echo "SSH key generated at: $ssh_key"
+  ssh-keygen -t ed25519 -C "$git_email" -f "$ssh_key" -N ""
+  echo "SSH key generated at: $ssh_key (no passphrase)"
 fi
 
-# Start ssh-agent and add key
-eval "$(ssh-agent -s)"
-ssh-add "$ssh_key"
-
-# Append SSH config
+# Append SSH config if missing, add namespace
 if ! grep -q "Host $ssh_alias" ~/.ssh/config 2>/dev/null; then
   echo "
 # $account GitHub account
@@ -49,7 +45,7 @@ else
   echo "SSH config already exists for $ssh_alias"
 fi
 
-# Create Git config for this account
+# Create Git config for this account, each dir should have this
 cat > "$gitconfig_account" <<EOF
 [user]
   name = $git_name
@@ -57,7 +53,7 @@ cat > "$gitconfig_account" <<EOF
 EOF
 echo "Git identity config saved to $gitconfig_account"
 
-# Add includeIf rule to ~/.gitconfig if missing
+# Add includeIf rule to ~/.gitconfig if missing, this tells git to see this dir config to be dynamic
 if ! grep -q "includeIf \"gitdir:~/dev/$account/\"" ~/.gitconfig 2>/dev/null; then
   echo "
 [includeIf \"gitdir:~/dev/$account/\"]
@@ -68,7 +64,7 @@ else
   echo "includeIf already exists for ~/dev/$account/"
 fi
 
-# Show the public key
+# Show the public key, so you can add it to github FE
 echo
 echo "=== Public Key (copy this into GitHub SSH keys UI) ==="
 cat "$ssh_key.pub"
