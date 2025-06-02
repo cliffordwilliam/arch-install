@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== GitHub Account Setup Script ==="
+echo "=== Create dedicated dir for 1 account ==="
 
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
@@ -76,3 +76,5 @@ echo
 echo "Add it at: https://github.com/settings/ssh/new"
 echo "When cloning, use:"
 echo "  git@${ssh_alias}:<username>/<repo>.git"
+
+echo "When pushing existing for first time, add remote like this git@github.com-ALIAS-NAMESPACE-HERE:roundpork/test-repo.git"
