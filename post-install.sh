@@ -94,12 +94,11 @@ opacity-rule = [
 EOF
 
 echo "=== Creating .xinitrc to launch dwm ==="
-cat <<'EOF' > "$USER_HOME/.xinitrc"
-feh --bg-scale "$WALLPAPER_PATH" &
-picom &
-~/.custom-dwm-status.sh &
-exec dwm
-EOF
+printf "%s\n" \
+  "feh --bg-scale \"$WALLPAPER_PATH\" &" \
+  "picom &" \
+  "~/.custom-dwm-status.sh &" \
+  "exec dwm" > "$USER_HOME/.xinitrc"
 chmod +x "$USER_HOME/.xinitrc"
 
 echo "=== Creating .bash_profile to launch startx on login ==="
