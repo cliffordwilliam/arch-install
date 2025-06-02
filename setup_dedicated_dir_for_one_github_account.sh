@@ -2,6 +2,11 @@
 
 echo "=== GitHub Account Setup Script ==="
 
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+touch ~/.ssh/config
+chmod 600 ~/.ssh/config
+
 # Ask for account namespace
 read -p "Enter an account label (e.g. personal, work): " account
 account_dir="$HOME/dev/$account"
