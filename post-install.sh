@@ -16,14 +16,14 @@ WALLPAPER_PATH="$USER_HOME/wallpaper.jpg"
 echo "=== Installing general packages ==="
 pacman -Syu --noconfirm
 # git, sudo, dwm deps
+# audio util, browser, curl
+# nvim
+# firewall
+# wallpaper and transparent terminal
 pacman -S --noconfirm git sudo base-devel xorg xorg-xinit libx11 libxft libxinerama \
-  # audio util, browser, curl
   alsa-utils firefox curl \
-  # nvim
   neovim xclip gcc make unzip zip ripgrep fd \
-  # firewall
   ufw \
-  # wallpaper and transparent terminal
   feh picom
 
 echo "=== Checking if user '$TARGET_USER' already exists ==="
