@@ -29,22 +29,44 @@ while true; do
   fi
 done
 
+# Show disk size using lsblk
+echo "=== Detected disk info ==="
+lsblk -d -o NAME,SIZE,MODEL "$DISK"
+
+DISK_SIZE=$(lsblk -b -dn -o SIZE "$DISK")
+DISK_SIZE_GB=$((DISK_SIZE / 1024 / 1024 / 1024))
+echo "Total disk size: ${DISK_SIZE_GB} GB"
+
+# Prompt for partition sizes
+echo "Now enter partition sizes in MiB (e.g., 1024 = 1GiB)"
+read -p "Enter EFI partition size (e.g., 1024): " EFI_SIZE
+read -p "Enter SWAP partition size (e.g., 4096): " SWAP_SIZE
+
+# Calculate start and end positions
+ROOT_START=$((EFI_SIZE + SWAP_SIZE + 1))
+echo "Root partition will start at ${ROOT_START}MiB and take the remaining space."
+
+# Confirm
+read -p "Proceed to partition $DISK with these values? [y/N]: " confirm
+if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+  echo "Aborting."
+  exit 1
+fi
+
 echo "=== Cleaning up any previous mounts ==="
 umount -R /mnt 2>/dev/null || true
 if swapon --show=NAME --noheadings | grep -q "^${DISK}p2$"; then
   echo "Disabling swap on ${DISK}p2"
   swapoff "${DISK}p2"
-else
-  echo "No active swap on ${DISK}p2"
 fi
 
 echo "=== Partitioning $DISK ==="
 parted --script "$DISK" \
   mklabel gpt \
-  mkpart ESP fat32 1MiB 1025MiB \
+  mkpart ESP fat32 1MiB "$((EFI_SIZE + 1))MiB" \
   set 1 boot on \
-  mkpart primary linux-swap 1025MiB 5121MiB \
-  mkpart primary ext4 5121MiB 100%
+  mkpart primary linux-swap "$((EFI_SIZE + 1))MiB" "$((EFI_SIZE + SWAP_SIZE + 1))MiB" \
+  mkpart primary ext4 "$((EFI_SIZE + SWAP_SIZE + 1))MiB" 100%
 
 echo "=== Formatting partitions ==="
 mkfs.fat -F 32 "${DISK}p1"
