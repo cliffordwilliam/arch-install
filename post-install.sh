@@ -22,7 +22,7 @@ pacman -Syu --noconfirm
 # wallpaper and transparent terminal
 pacman -S --noconfirm git sudo base-devel xorg xorg-xinit libx11 libxft libxinerama \
   alsa-utils firefox curl \
-  neovim xclip gcc make unzip zip ripgrep fd \
+  neovim xclip gcc make unzip zip ripgrep fd tmux \
   ufw \
   feh picom
 
