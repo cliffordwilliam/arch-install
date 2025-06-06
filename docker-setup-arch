@@ -74,3 +74,21 @@ sudo systemctl stop docker.socket docker.service
 
 * This stops both the Docker daemon and the socket listener.
 * No background triggers will restart it until you manually start it again.
+
+---
+
+sudo systemctl start docker
+docker-compose up -d
+
+#Stop and remove your Docker Compose containers
+docker-compose down
+
+#This stops Docker itself, so no Docker commands will work until you start it again.
+sudo systemctl stop docker.service
+
+#(Optional) Remove leftover containers/images if you want to clean all traces
+docker container prune -f
+docker image prune -a -f
+
+#Or clean everything at once (warning: deletes all stopped containers, unused images, networks, and volumes)
+docker system prune -a --volumes -f
