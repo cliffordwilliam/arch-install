@@ -1,0 +1,72 @@
+# 🐳 Docker Lifecycle on Arch Linux
+
+A quick guide to install Docker, run a test container, clean up, and stop the service.
+
+## ✅ Install docker from pacman
+
+```bash
+sudo pacman -S docker
+```
+
+## ✅ Fix: Add your user to the `docker` group
+
+```bash
+sudo usermod -aG docker $USER
+```
+## ✅ Reboot
+
+```bash
+reboot
+```
+  
+## ✅ Docker Lifecycle You Just Performed
+
+### 🟢 1. **Start Docker**
+
+```bash
+sudo systemctl start docker
+```
+
+### 🚀 2. **Run a container**
+
+```bash
+docker run hello-world
+```
+
+* Pulled the image because it wasn't local.
+* Started and ran the container.
+* Output confirmed Docker is working.
+* You verified the container ran and exited:
+
+  ```bash
+  docker ps -a
+  ```
+
+### 🧹 3. **Clean up**
+
+* Deleted the stopped container with:
+
+  ```bash
+  docker container prune
+  ```
+* Deleted the image:
+
+  ```bash
+  docker rmi hello-world
+  ```
+* Verified nothing left:
+
+  ```bash
+  docker ps -a
+  ```
+
+---
+
+### 🔴 4. **Stop Docker fully**
+
+```bash
+sudo systemctl stop docker.socket docker.service
+```
+
+* This stops both the Docker daemon and the socket listener.
+* No background triggers will restart it until you manually start it again.
