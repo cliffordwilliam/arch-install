@@ -4,8 +4,12 @@ A quick guide to install Docker, run a test container, clean up, and stop the se
 
 ## ✅ Install docker from pacman
 
+docker: container manager, cli interface
+
+docker-compose: automates container setup with yaml reading ability
+
 ```bash
-sudo pacman -S docker
+sudo pacman -S docker docker-compose
 ```
 
 ## ✅ Fix: Add your user to the `docker` group
