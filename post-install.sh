@@ -26,6 +26,9 @@ pacman -S --noconfirm git sudo base-devel xorg xorg-xinit libx11 libxft libxiner
   ufw \
   feh picom
 
+echo "=== Change the default branch for Git to main ==="
+git config --global init.defaultBranch main
+
 echo "=== Checking if user '$TARGET_USER' already exists ==="
 if id "$TARGET_USER" &>/dev/null; then
   echo "User $TARGET_USER already exists. Skipping user creation."
