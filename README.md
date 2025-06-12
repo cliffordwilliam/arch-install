@@ -79,3 +79,10 @@ Press Enter to open https://github.com/login/device in your browser...
 ✓ Logged in as cliffordwilliam
 [cliff@cliff repos]$ ssh -T git@github.com
 ```
+
+## Working is as simple as
+1. git init
+2. git add and git commit
+3. gh repo create coffee-shop --public --source=. --remote=origin --push
+
+The 3rd one creates the remote repo and push the local there
