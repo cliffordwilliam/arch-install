@@ -38,21 +38,24 @@ else
   sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 fi
 
-echo "=== Installing Node Version Manager (nvm) for $TARGET_USER ==="
-sudo -u "$TARGET_USER" bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+echo "=== Installing Node Version Manager (nvm) and Node.js LTS for $TARGET_USER ==="
+sudo -u "$TARGET_USER" HOME="$USER_HOME" bash -c "
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
-# Append NVM configuration to user's .bashrc
-cat <<'EOF' >> "$USER_HOME/.bashrc"
+  # Add nvm env vars to .bashrc
+  cat <<'EOF' >> \"$HOME/.bashrc\"
 
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "$HOME/.nvm" || printf %s "$XDG_CONFIG_HOME/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+export NVM_DIR=\"\$([ -z \"\${XDG_CONFIG_HOME-}\" ] && printf %s \"\$HOME/.nvm\" || printf %s \"\$XDG_CONFIG_HOME/nvm\")\"
+[ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\" # This loads nvm
 EOF
 
-# Source nvm.sh and verify it was installed
-sudo -u "$TARGET_USER" bash -c "
-  export NVM_DIR=\"\$([ -z \"\${XDG_CONFIG_HOME-}\" ] && printf %s \"$USER_HOME/.nvm\" || printf %s \"\$XDG_CONFIG_HOME/nvm\")\"
+  # Source nvm and install latest LTS node version
+  export NVM_DIR=\"$HOME/.nvm\"
   [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
-  command -v nvm
+
+  nvm install --lts
+  nvm alias default lts/*
+  nvm use --lts
 "
 
 echo "=== Configuring global Git user name and email for $TARGET_USER ==="
