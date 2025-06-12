@@ -52,3 +52,30 @@ login as user
 startx to start ui
 ```
 
+## After postinstall push ssh key to remote github using github cli
+
+```bash
+[cliff@cliff repos]$ gh auth logout
+✓ Logged out of github.com account cliffordwilliam
+[cliff@cliff repos]$ gh auth login
+? Where do you use GitHub? GitHub.com
+? What is your preferred protocol for Git operations on this host? SSH
+? Upload your SSH public key to your GitHub account? /home/cliff/.ssh/id_ed25519.pub
+? Title for your SSH key: cliff-bla-bla-computer-linux
+? How would you like to authenticate GitHub CLI? Login with a web browser
+
+! First copy your one-time code: 1231-1231
+Press Enter to open https://github.com/login/device in your browser...
+! Failed opening a web browser at https://github.com/login/device
+  exec: "xdg-open,x-www-browser,www-browser,wslview": executable file not found in $PATH
+  Please try entering the URL in your browser manually
+
+
+✓ Authentication complete.
+- gh config set -h github.com git_protocol ssh
+✓ Configured git protocol
+! Authentication credentials saved in plain text
+✓ Uploaded the SSH key to your GitHub account: /home/cliff/.ssh/id_ed25519.pub
+✓ Logged in as cliffordwilliam
+[cliff@cliff repos]$ ssh -T git@github.com
+```
