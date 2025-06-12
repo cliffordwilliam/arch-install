@@ -32,13 +32,6 @@ git config --global init.defaultBranch main
 echo "=== Change the default to merge ==="
 git config --global pull.rebase false
 
-echo "=== Configuring global Git user name and email for $TARGET_USER ==="
-read -rp "Enter Git user name: " GIT_NAME
-read -rp "Enter Git email: " GIT_EMAIL
-
-sudo -u "$TARGET_USER" git config --global user.name "$GIT_NAME"
-sudo -u "$TARGET_USER" git config --global user.email "$GIT_EMAIL"
-
 echo "=== Checking if user '$TARGET_USER' already exists ==="
 if id "$TARGET_USER" &>/dev/null; then
   echo "User $TARGET_USER already exists. Skipping user creation."
@@ -50,6 +43,13 @@ else
   echo "=== Enabling sudo for wheel group ==="
   sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 fi
+
+echo "=== Configuring global Git user name and email for $TARGET_USER ==="
+read -rp "Enter Git user name: " GIT_NAME
+read -rp "Enter Git email: " GIT_EMAIL
+
+sudo -u "$TARGET_USER" git config --global user.name "$GIT_NAME"
+sudo -u "$TARGET_USER" git config --global user.email "$GIT_EMAIL"
 
 echo "=== Preparing user home and config directories ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
