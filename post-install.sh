@@ -29,6 +29,16 @@ pacman -S --noconfirm git github-cli openssh sudo base-devel xorg xorg-xinit lib
 echo "=== Change the default branch for Git to main ==="
 git config --global init.defaultBranch main
 
+echo "=== Change the default to merge ==="
+git config --global pull.rebase false
+
+echo "=== Configuring global Git user name and email for $TARGET_USER ==="
+read -rp "Enter Git user name: " GIT_NAME
+read -rp "Enter Git email: " GIT_EMAIL
+
+sudo -u "$TARGET_USER" git config --global user.name "$GIT_NAME"
+sudo -u "$TARGET_USER" git config --global user.email "$GIT_EMAIL"
+
 echo "=== Checking if user '$TARGET_USER' already exists ==="
 if id "$TARGET_USER" &>/dev/null; then
   echo "User $TARGET_USER already exists. Skipping user creation."
@@ -45,10 +55,12 @@ echo "=== Preparing user home and config directories ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
 
 echo "=== Cloning kickstart.nvim config for user $TARGET_USER ==="
+rm -rf "$USER_HOME/.config/nvim"
 sudo -u "$TARGET_USER" git clone --depth 1 https://github.com/nvim-lua/kickstart.nvim.git "$USER_HOME/.config/nvim"
 
 echo "=== Generating SSH key for GitHub ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.ssh"
+rm -rf "$USER_HOME/.ssh/id_ed25519"
 sudo -u "$TARGET_USER" ssh-keygen -t ed25519 -C "$TARGET_USER@$(hostname)" -f "$USER_HOME/.ssh/id_ed25519" -N ""
 
 echo "=== Setting up ufw firewall ==="
