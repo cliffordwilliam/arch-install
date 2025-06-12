@@ -47,6 +47,10 @@ install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
 echo "=== Cloning kickstart.nvim config for user $TARGET_USER ==="
 sudo -u "$TARGET_USER" git clone --depth 1 https://github.com/nvim-lua/kickstart.nvim.git "$USER_HOME/.config/nvim"
 
+echo "=== Generating SSH key for GitHub ==="
+install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.ssh"
+sudo -u "$TARGET_USER" ssh-keygen -t ed25519 -C "$TARGET_USER@$(hostname)" -f "$USER_HOME/.ssh/id_ed25519" -N ""
+
 echo "=== Setting up ufw firewall ==="
 systemctl enable --now ufw
 ufw default deny incoming
