@@ -50,10 +50,6 @@ sudo -u "$TARGET_USER" git config --global pull.rebase false
 echo "=== Preparing user home and config directories ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
 
-echo "=== Cloning kickstart.nvim config for user $TARGET_USER ==="
-rm -rf "$USER_HOME/.config/nvim"
-sudo -u "$TARGET_USER" git clone --depth 1 https://github.com/nvim-lua/kickstart.nvim.git "$USER_HOME/.config/nvim"
-
 echo "=== Generating SSH key for GitHub ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.ssh"
 rm -rf "$USER_HOME/.ssh/id_ed25519"
