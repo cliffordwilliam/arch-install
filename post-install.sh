@@ -125,4 +125,4 @@ chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME"
 echo "=== Cleaning up ==="
 rm -rf "$BUILD_DIR"
 
-echo "✅ Setup complete. Reboot and login as $TARGET_USER"
+echo "✅ Setup complete. Reboot and login as $TARGET_USER. Do not forget to use github cli to push ssh key to remote, see readme if you forget"
