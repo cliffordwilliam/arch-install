@@ -26,12 +26,6 @@ pacman -S --noconfirm git github-cli openssh sudo base-devel xorg xorg-xinit lib
   ufw \
   feh picom
 
-echo "=== Change the default branch for Git to main ==="
-git config --global init.defaultBranch main
-
-echo "=== Change the default to merge ==="
-git config --global pull.rebase false
-
 echo "=== Checking if user '$TARGET_USER' already exists ==="
 if id "$TARGET_USER" &>/dev/null; then
   echo "User $TARGET_USER already exists. Skipping user creation."
@@ -50,6 +44,8 @@ read -rp "Enter Git email: " GIT_EMAIL
 
 sudo -u "$TARGET_USER" git config --global user.name "$GIT_NAME"
 sudo -u "$TARGET_USER" git config --global user.email "$GIT_EMAIL"
+sudo -u "$TARGET_USER" git config --global init.defaultBranch main
+sudo -u "$TARGET_USER" git config --global pull.rebase false
 
 echo "=== Preparing user home and config directories ==="
 install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
