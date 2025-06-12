@@ -38,6 +38,23 @@ else
   sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
 fi
 
+echo "=== Installing Node Version Manager (nvm) for $TARGET_USER ==="
+sudo -u "$TARGET_USER" bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+
+# Append NVM configuration to user's .bashrc
+cat <<'EOF' >> "$USER_HOME/.bashrc"
+
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "$HOME/.nvm" || printf %s "$XDG_CONFIG_HOME/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+EOF
+
+# Source nvm.sh and verify it was installed
+sudo -u "$TARGET_USER" bash -c "
+  export NVM_DIR=\"\$([ -z \"\${XDG_CONFIG_HOME-}\" ] && printf %s \"$USER_HOME/.nvm\" || printf %s \"\$XDG_CONFIG_HOME/nvm\")\"
+  [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
+  command -v nvm
+"
+
 echo "=== Configuring global Git user name and email for $TARGET_USER ==="
 read -rp "Enter Git user name: " GIT_NAME
 read -rp "Enter Git email: " GIT_EMAIL
