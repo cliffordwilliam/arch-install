@@ -44,12 +44,12 @@ echo "=== Installing general packages ==="
 pacman -Syu --noconfirm
 # git, sudo, dwm deps
 # audio util, browser, curl
-# nvim
+# nvim, code
 # firewall
 # wallpaper and transparent terminal
 pacman -S --noconfirm git github-cli openssh sudo base-devel xorg xorg-xinit libx11 libxft libxinerama \
   alsa-utils firefox curl \
-  neovim xclip gcc make unzip zip ripgrep fd tmux \
+  code neovim xclip gcc make unzip zip ripgrep fd tmux \
   ufw \
   feh picom
 
