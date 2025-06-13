@@ -49,7 +49,7 @@ pacman -Syu --noconfirm
 # wallpaper and transparent terminal
 pacman -S --noconfirm git github-cli openssh sudo base-devel xorg xorg-xinit libx11 libxft libxinerama \
   alsa-utils firefox curl \
-  code neovim xclip gcc make unzip zip ripgrep fd tmux \
+  code nano tmux \
   ufw \
   feh picom
 
