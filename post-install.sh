@@ -27,12 +27,15 @@ install_nvm_and_node() {
   '
 
   echo "Appending nvm source to $USER_HOME/.bashrc"
-  cat <<'EOF' >> "$USER_HOME/.bashrc"
+  touch "$USER_HOME/.bashrc"
 
+if ! grep -q 'NVM_DIR' "$USER_HOME/.bashrc"; then
+  cat <<'EOF' >> "$USER_HOME/.bashrc"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 EOF
+fi
 
   chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.bashrc"
 }
