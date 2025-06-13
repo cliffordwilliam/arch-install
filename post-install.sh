@@ -13,6 +13,30 @@ URL_BASE="https://git.suckless.org"
 WALLPAPER_URL="https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/wallpaper.jpg"
 WALLPAPER_PATH="$USER_HOME/wallpaper.jpg"
 
+install_nvm_and_node() {
+  echo "=== Installing nvm and latest Node LTS for $TARGET_USER ==="
+  sudo -u "$TARGET_USER" bash -c '
+    export NVM_DIR="$HOME/.nvm"
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+    nvm install --lts
+    nvm use --lts
+  '
+
+  echo "Appending nvm source to $USER_HOME/.bashrc"
+  cat <<'EOF' >> "$USER_HOME/.bashrc"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+EOF
+
+  chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.bashrc"
+}
+
 echo "=== Installing general packages ==="
 pacman -Syu --noconfirm
 # git, sudo, dwm deps
@@ -125,6 +149,9 @@ amixer sset Master 50% unmute
 
 echo "=== Fixing ownership of user files ==="
 chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME"
+
+echo "=== Get nvm and node ==="
+install_nvm_and_node
 
 echo "=== Cleaning up ==="
 rm -rf "$BUILD_DIR"
