@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# Check internet first
+if ! ping -c1 archlinux.org &>/dev/null; then
+    echo "No internet connection!" >&2
+    exit 1
+fi
+
 # Check: Must run as regular user
 if [[ "$EUID" -eq 0 ]]; then
     echo "❌ Do NOT run this script as root. Please log in as your regular user." >&2
