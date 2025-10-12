@@ -1,162 +1,90 @@
 #!/bin/bash
-
 set -euo pipefail
 
-read -rp "Enter name for user: " TARGET_USER
-read -srp "Enter password for user $TARGET_USER: " PASSWORD
-echo
-
-USER_HOME="/home/$TARGET_USER"
-BUILD_DIR="/tmp/suckless"
-REPOS=("dwm" "st")
-URL_BASE="https://git.suckless.org"
-WALLPAPER_URL="https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/wallpaper.jpg"
-WALLPAPER_PATH="$USER_HOME/wallpaper.jpg"
-
-install_nvm_and_node() {
-  echo "=== Installing nvm and latest Node LTS for $TARGET_USER ==="
-  sudo -u "$TARGET_USER" bash -c '
-    export NVM_DIR="$HOME/.nvm"
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-    nvm install --lts
-    nvm use --lts
-  '
-
-  echo "Appending nvm source to $USER_HOME/.bashrc"
-  touch "$USER_HOME/.bashrc"
-
-if ! grep -q 'NVM_DIR' "$USER_HOME/.bashrc"; then
-  cat <<'EOF' >> "$USER_HOME/.bashrc"
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-EOF
+# Check: Must run as regular user
+if [[ "$EUID" -eq 0 ]]; then
+    echo "❌ Do NOT run this script as root. Please log in as your regular user." >&2
+    exit 1
 fi
 
-  chown "$TARGET_USER:$TARGET_USER" "$USER_HOME/.bashrc"
-}
+# Check: Must have sudo privileges
+if ! command -v sudo &>/dev/null; then
+    echo "❌ sudo not found. Make sure your user has sudo privileges." >&2
+    exit 1
+fi
 
-echo "=== Installing general packages ==="
-pacman -Syu --noconfirm
-# git, sudo, dwm deps
-# audio util, browser, curl
-# nvim, code
-# firewall
-# wallpaper and transparent terminal
-pacman -S --noconfirm git github-cli openssh sudo base-devel xorg xorg-xinit libx11 libxft libxinerama \
-  alsa-utils firefox curl \
-  code nano tmux \
-  ufw \
-  feh picom
+# --- System-Wide Setup (Requires sudo) ---
+# Package Installation
+echo "📦 Installing core packages..."
+sudo pacman -Syu --noconfirm
+sudo pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama \
+    alsa-utils firefox ufw git
 
-echo "=== Checking if user '$TARGET_USER' already exists ==="
-if id "$TARGET_USER" &>/dev/null; then
-  echo "User $TARGET_USER already exists. Skipping user creation."
+# Audio Configuration
+echo "🔊 Attempting to set Master volume..."
+if amixer sset Master 50% unmute &>/dev/null; then
+    echo "✓ Master audio channel set to 50%."
 else
-  echo "=== Creating user '$TARGET_USER' ==="
-  useradd -m -G wheel -s /bin/bash "$TARGET_USER"
-  echo "$TARGET_USER:$PASSWORD" | chpasswd
-
-  echo "=== Enabling sudo for wheel group ==="
-  sed -i '/^# %wheel ALL=(ALL:ALL) ALL/s/^# //' /etc/sudoers
+    echo "⚠️ Failed to set Master channel. Run 'alsamixer' manually to configure audio."
 fi
 
-echo "=== Configuring global Git user name and email for $TARGET_USER ==="
-read -rp "Enter Git user name: " GIT_NAME
-read -rp "Enter Git email: " GIT_EMAIL
+# UFW Configuration
+echo "🛡️ Configuring UFW firewall..."
+sudo systemctl enable --now ufw
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw --force enable
 
-sudo -u "$TARGET_USER" git config --global user.name "$GIT_NAME"
-sudo -u "$TARGET_USER" git config --global user.email "$GIT_EMAIL"
-sudo -u "$TARGET_USER" git config --global init.defaultBranch main
-sudo -u "$TARGET_USER" git config --global pull.rebase false
+# --- User-Specific Setup (No sudo required) ---
+# Ensure local bin directory exists and is in PATH
+echo "⚙️ Setting up local bin directory..."
+mkdir -p "$HOME/.local/bin"
 
-echo "=== Preparing user home and config directories ==="
-install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config"
-
-echo "=== Generating SSH key for GitHub ==="
-install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.ssh"
-rm -rf "$USER_HOME/.ssh/id_ed25519"
-sudo -u "$TARGET_USER" ssh-keygen -t ed25519 -C "$TARGET_USER@$(hostname)" -f "$USER_HOME/.ssh/id_ed25519" -N ""
-
-echo "=== Setting up ufw firewall ==="
-systemctl enable --now ufw
-ufw default deny incoming
-ufw default allow outgoing
-ufw enable
-
-echo "=== Creating build directory and cloning suckless repos ==="
-rm -rf "$BUILD_DIR"
-install -d -o "$TARGET_USER" -g "$TARGET_USER" "$BUILD_DIR"
-
-for repo in "${REPOS[@]}"; do
-  sudo -u "$TARGET_USER" git clone "$URL_BASE/$repo" "$BUILD_DIR/$repo"
-  pushd "$BUILD_DIR/$repo" >/dev/null
-  sudo -u "$TARGET_USER" make clean
-  make install
-  popd >/dev/null
-  rm -rf "$BUILD_DIR/$repo"
-done
-
-echo "=== Creating custom DWM status script ==="
-cat <<'EOF' > "$USER_HOME/.custom-dwm-status.sh"
-#!/bin/bash
-
-while true; do
-  BAT=$(cat /sys/class/power_supply/BAT0/capacity)
-  STATUS=$(cat /sys/class/power_supply/BAT0/status)
-  TIME=$(date '+%a %b %d %Y %H:%M')
-
-  xsetroot -name "BAT: $BAT% ($STATUS) | $TIME"
-  sleep 60
-done
-EOF
-chmod +x "$USER_HOME/.custom-dwm-status.sh"
-
-echo "=== Installing feh for wallpaper ==="
-echo "Downloading wallpaper..."
-curl -L "$WALLPAPER_URL" -o "$WALLPAPER_PATH"
-
-echo "=== Creating picom configuration ==="
-install -d -o "$TARGET_USER" -g "$TARGET_USER" "$USER_HOME/.config/picom"
-cat <<'EOF' > "$USER_HOME/.config/picom/picom.conf"
-backend = "glx";
-vsync = true;
-
-opacity-rule = [
-  "80:class_g = 'st-256color'",
-];
-EOF
-
-echo "=== Creating .xinitrc to launch dwm ==="
-printf "%s\n" \
-  "feh --bg-scale \"$WALLPAPER_PATH\" &" \
-  "picom &" \
-  "~/.custom-dwm-status.sh &" \
-  "exec dwm" > "$USER_HOME/.xinitrc"
-chmod +x "$USER_HOME/.xinitrc"
-
-echo "=== Creating .bash_profile to launch startx on login ==="
-cat <<'EOF' > "$USER_HOME/.bash_profile"
-if [[ -z $DISPLAY && $(tty) == /dev/tty1 ]]; then
-  exec startx
+if ! grep -q '.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+    echo "✓ Added ~/.local/bin to PATH"
 fi
+
+# Build suckless tools
+echo "🛠️ Building suckless tools (dwm, st, dmenu)..."
+BUILD_DIR="$HOME/suckless"
+mkdir -p "$BUILD_DIR"
+
+for repo in dwm st dmenu; do
+    echo "-> Building $repo..."
+    rm -rf "$BUILD_DIR/$repo"
+    git clone --depth 1 "https://git.suckless.org/$repo" "$BUILD_DIR/$repo"
+    pushd "$BUILD_DIR/$repo" >/dev/null
+    make
+    cp "$repo" "$HOME/.local/bin/"
+    popd >/dev/null
+done
+
+echo "✓ Suckless tools installed to ~/.local/bin/"
+
+# Configure xinitrc if needed
+if [[ ! -f "$HOME/.xinitrc" ]]; then
+    echo "⚙️ Creating .xinitrc..."
+    cat > "$HOME/.xinitrc" <<'EOF'
+exec dwm
 EOF
-chmod +x "$USER_HOME/.bash_profile"
+    echo "✓ Created ~/.xinitrc"
+fi
 
-echo "=== Setting volume to 50% and unmuting ==="
-amixer sset Master 50% unmute
-
-echo "=== Fixing ownership of user files ==="
-chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME"
-
-echo "=== Get nvm and node ==="
-install_nvm_and_node
-
-echo "=== Cleaning up ==="
-rm -rf "$BUILD_DIR"
-
-echo "✅ Setup complete. Reboot and login as $TARGET_USER. Do not forget to use github cli to push ssh key to remote, see readme if you forget"
+# Final instructions
+echo ""
+echo "═══════════════════════════════════════════════"
+echo "✅ Post-installation complete!"
+echo "═══════════════════════════════════════════════"
+echo ""
+echo "📝 Next steps:"
+echo "  1. Log out and log back in (or run: source ~/.bashrc)"
+echo "  2. Run 'startx' to start DWM"
+echo "  3. Press Mod+Shift+Enter to open terminal (st)"
+echo "  4. Press Mod+P to launch dmenu"
+echo ""
+echo "💡 Tips:"
+echo "  - Default Mod key is Alt"
+echo "  - Edit DWM: cd ~/suckless/dwm && make && cp dwm ~/.local/bin/"
+echo "  - Configure audio: run 'alsamixer'"
+echo ""
