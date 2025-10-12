@@ -56,7 +56,7 @@ echo "🛠️ Building suckless tools (dwm, st, dmenu)..."
 BUILD_DIR="$HOME/suckless"
 mkdir -p "$BUILD_DIR"
 
-for repo in dwm st dmenu; do
+for repo in dwm st; do
     echo "-> Building $repo..."
     rm -rf "$BUILD_DIR/$repo"
     git clone --depth 1 "https://git.suckless.org/$repo" "$BUILD_DIR/$repo"
