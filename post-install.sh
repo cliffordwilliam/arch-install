@@ -63,7 +63,7 @@ for repo in dwm st dmenu slstatus; do
     pushd "$BUILD_DIR/$repo" >/dev/null
     make
     if [[ "$repo" == "dmenu" ]]; then
-        cp dmenu dmenu_run dmenu_path "$HOME/.local/bin/"
+        cp dmenu dmenu_run dmenu_path stest "$HOME/.local/bin/"
     else
         cp "$repo" "$HOME/.local/bin/"
     fi
