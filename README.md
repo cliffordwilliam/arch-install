@@ -88,10 +88,6 @@ make
 cp slstatus ~/.local/bin/
 ```
 
-Quit out of dwm and relogin to `startx` again to start dwm again.
-
-```bash
-alt + shift + Q
-```
+Now `startx` again to start dwm again.
 
 You should see the battery percentage now.
