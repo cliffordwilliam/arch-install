@@ -15,10 +15,9 @@ Check the script and edit the content before running it as needed.
 3. Run preinstall in live env, run postinstall after logging in:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/preinstall.sh
-curl -LO https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/postinstall.sh
-chmod +x preinstall.sh
-bash -x preinstall.sh
+curl -O https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/pre-install.sh
+curl -O https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/post-install.sh
+bash pre-install.sh
 ```
 
 ## Connect to internet in live env
@@ -48,41 +47,50 @@ nmtui
 ## After postinstall
 
 ```bash
-login as user
 startx to start ui
 ```
 
-## After postinstall push ssh key to remote github using github cli
+## Different machine different battery reference, this is how you check for Linux
 
 ```bash
-[cliff@cliff repos]$ gh auth logout
-✓ Logged out of github.com account cliffordwilliam
-[cliff@cliff repos]$ gh auth login
-? Where do you use GitHub? GitHub.com
-? What is your preferred protocol for Git operations on this host? SSH
-? Upload your SSH public key to your GitHub account? /home/cliff/.ssh/id_ed25519.pub
-? Title for your SSH key: cliff-bla-bla-computer-linux
-? How would you like to authenticate GitHub CLI? Login with a web browser
-
-! First copy your one-time code: 1231-1231
-Press Enter to open https://github.com/login/device in your browser...
-! Failed opening a web browser at https://github.com/login/device
-  exec: "xdg-open,x-www-browser,www-browser,wslview": executable file not found in $PATH
-  Please try entering the URL in your browser manually
-
-
-✓ Authentication complete.
-- gh config set -h github.com git_protocol ssh
-✓ Configured git protocol
-! Authentication credentials saved in plain text
-✓ Uploaded the SSH key to your GitHub account: /home/cliff/.ssh/id_ed25519.pub
-✓ Logged in as cliffordwilliam
-[cliff@cliff repos]$ ssh -T git@github.com
+for b in /sys/class/power_supply/*; do     if grep -q "Battery" "$b/type" 2>/dev/null; then         basename "$b";     fi; done
 ```
 
-## Working is as simple as
-1. git init
-2. git add and git commit
-3. gh repo create coffee-shop --public --source=. --remote=origin --push
+Given that battery is BAT0.
 
-The 3rd one creates the remote repo and push the local there
+Enter the repo we cloned from post install.
+
+```bash
+cd ~/suckless/slstatus
+```
+
+Then edit the `config.h`, add new `battery_perc`.
+
+```config.h
+static const struct arg args[] = {
+        /* function format          argument */
+        { datetime, "%s",           "%F %T" },
+        { battery_perc, " %s%%", "BAT0" },
+};
+```
+
+Make sure you kill any running slstatus first.
+
+```bash
+pkill slstatus
+```
+
+Save the file and rebuild and copy build to `~/.local/bin/`.
+
+```bash
+make clean
+cp slstatus ~/.local/bin/
+```
+
+Quit out of dwm and relogin to `startx` again to start dwm again.
+
+```bash
+alt + shift + Q
+```
+
+You should see the battery percentage now.
