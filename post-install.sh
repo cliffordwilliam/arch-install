@@ -56,7 +56,7 @@ echo "🛠️ Building suckless tools (dwm, st, dmenu)..."
 BUILD_DIR="$HOME/suckless"
 mkdir -p "$BUILD_DIR"
 
-for repo in dwm st dmenu; do
+for repo in dwm st dmenu slstatus; do
     echo "-> Building $repo..."
     rm -rf "$BUILD_DIR/$repo"
     git clone --depth 1 "https://git.suckless.org/$repo" "$BUILD_DIR/$repo"
@@ -77,9 +77,10 @@ echo "✓ Suckless tools installed to ~/.local/bin/"
 if [[ ! -f "$HOME/.xinitrc" ]]; then
     echo "⚙️ Creating .xinitrc..."
     cat > "$HOME/.xinitrc" <<'EOF'
+slstatus &
 exec dwm
 EOF
-    echo "✓ Created ~/.xinitrc"
+    echo "✓ Created ~/.xinitrc with slstatus"
 fi
 
 # Final instructions
