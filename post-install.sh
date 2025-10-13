@@ -56,15 +56,20 @@ echo "🛠️ Building suckless tools (dwm, st, dmenu)..."
 BUILD_DIR="$HOME/suckless"
 mkdir -p "$BUILD_DIR"
 
-for repo in dwm st; do
+for repo in dwm st dmenu; do
     echo "-> Building $repo..."
     rm -rf "$BUILD_DIR/$repo"
     git clone --depth 1 "https://git.suckless.org/$repo" "$BUILD_DIR/$repo"
     pushd "$BUILD_DIR/$repo" >/dev/null
     make
-    cp "$repo" "$HOME/.local/bin/"
+    if [[ "$repo" == "dmenu" ]]; then
+        cp dmenu dmenu_run "$HOME/.local/bin/"
+    else
+        cp "$repo" "$HOME/.local/bin/"
+    fi
     popd >/dev/null
 done
+
 
 echo "✓ Suckless tools installed to ~/.local/bin/"
 
