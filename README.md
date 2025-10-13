@@ -83,7 +83,8 @@ pkill slstatus
 Save the file and rebuild and copy build to `~/.local/bin/`.
 
 ```bash
-make clean install
+make clean
+make
 cp slstatus ~/.local/bin/
 ```
 
