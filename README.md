@@ -58,6 +58,12 @@ for b in /sys/class/power_supply/*; do     if grep -q "Battery" "$b/type" 2>/dev
 
 Given that battery is BAT0.
 
+Make sure you first exit dwm, since we cannot cp to build of the slstatus if its running.
+
+```bash
+alt + shift + Q
+```
+
 Enter the repo we cloned from post install.
 
 ```bash
@@ -72,12 +78,6 @@ static const struct arg args[] = {
         { datetime, "%s",           "%F %T" },
         { battery_perc, " %s%%", "BAT0" },
 };
-```
-
-Make sure you kill any running slstatus first.
-
-```bash
-pkill slstatus
 ```
 
 Save the file and rebuild and copy build to `~/.local/bin/`.
