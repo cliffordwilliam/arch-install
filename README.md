@@ -76,6 +76,7 @@ Then edit the `config.h`, add new `battery_perc`.
 static const struct arg args[] = {
         /* function format          argument */
         { datetime, "%s",           "%F %T" },
+        { battery_state, " %s", "BAT0" },
         { battery_perc, " %s%%", "BAT0" },
 };
 ```
