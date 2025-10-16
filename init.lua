@@ -1,18 +1,13 @@
 -- ~/.config/nvim/init.lua
 -- Minimal Neovim IDE Configuration
--- Treat this like npm package.json, you will have to run `:Lazy sync` like its `npm i` to sync deps
--- You also need the following in your machine first, use pacman to get them
--- sudo pacman -S python-lsp-server (or any other lsp you need)
--- sudo pacman -S ripgrep (for fuzzy search like ctrl p)
 
 -- Set leader key to space (like VSCode's Ctrl+Shift+P)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 -- Basic settings
+vim.opt.clipboard = "unnamedplus"    -- Yank to system with xclip installed
 vim.opt.number = true                -- Show line numbers
-vim.opt.relativenumber = true        -- Relative line numbers
-vim.opt.mouse = 'a'                  -- Enable mouse
 vim.opt.ignorecase = true            -- Ignore case in search
 vim.opt.smartcase = true             -- Unless uppercase is used
 vim.opt.hlsearch = false             -- Don't highlight searches
@@ -42,20 +37,11 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   -- Color scheme
   {
-    "folke/tokyonight.nvim",
+    "EdenEast/nightfox.nvim",
     lazy = false,
     priority = 1000,
     config = function()
-      vim.cmd([[colorscheme tokyonight]])
-    end,
-  },
-
-  -- File explorer
-  {
-    "nvim-tree/nvim-tree.lua",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      require("nvim-tree").setup()
+      vim.cmd([[colorscheme nightfox]])
     end,
   },
 
@@ -105,9 +91,6 @@ require("lazy").setup({
         callback = function(ev)
           local opts = { buffer = ev.buf }
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-          vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-          vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
         end,
       })
     end,
@@ -131,10 +114,7 @@ require("lazy").setup({
           end,
         },
         mapping = cmp.mapping.preset.insert({
-          ["<C-Space>"] = cmp.mapping.complete(),
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
-          ["<Tab>"] = cmp.mapping.select_next_item(),
-          ["<S-Tab>"] = cmp.mapping.select_prev_item(),
         }),
         sources = {
           { name = "nvim_lsp" },
@@ -144,25 +124,8 @@ require("lazy").setup({
       })
     end,
   },
-
-  -- Status line (like VSCode's bottom bar)
-  {
-    "nvim-lualine/lualine.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      require("lualine").setup()
-    end,
-  },
 })
 
 -- Key mappings (similar to VSCode shortcuts)
-vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>", { desc = "Toggle file explorer" })
 vim.keymap.set("n", "<leader>ff", ":Telescope find_files<CR>", { desc = "Find files" })
 vim.keymap.set("n", "<leader>fg", ":Telescope live_grep<CR>", { desc = "Live grep" })
-vim.keymap.set("n", "<leader>fb", ":Telescope buffers<CR>", { desc = "Find buffers" })
-
--- Save file
-vim.keymap.set("n", "<C-s>", ":w<CR>", { desc = "Save file" })
-
--- Clear search highlight on Esc
-vim.keymap.set("n", "<Esc>", ":noh<CR>", { desc = "Clear search" })
