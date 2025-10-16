@@ -161,12 +161,7 @@ echo "root:$ROOT_PASSWORD" | chpasswd
 systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
-pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama alsa-utils firefox ufw git
-
-systemctl enable ufw
-ufw default deny incoming
-ufw default allow outgoing
-ufw --force enable
+pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama alsa-utils firefox git
 
 useradd -m -G wheel -s /bin/bash "$USERNAME"
 echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
@@ -211,3 +206,6 @@ grub-mkconfig -o /boot/grub/grub.cfg
 EOF
 
 echo "Installation complete. Login as $USERNAME and run: startx"
+echo "⚠️  IMPORTANT: Firewall was NOT installed."
+echo "    After logging in, you can enable ufw manually with:"
+echo "    sudo pacman -S ufw && sudo systemctl enable --now ufw"
