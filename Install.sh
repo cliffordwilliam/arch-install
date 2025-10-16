@@ -206,6 +206,9 @@ grub-mkconfig -o /boot/grub/grub.cfg
 EOF
 
 echo "Installation complete. Login as $USERNAME and run: startx"
-echo "⚠️  IMPORTANT: Firewall was NOT installed."
+echo "⚠️  IMPORTANT: Firewall was NOT enabled."
 echo "    After logging in, you can enable ufw manually with:"
-echo "    sudo pacman -S ufw && sudo systemctl enable --now ufw"
+echo "    systemctl enable ufw"
+echo "    sudo ufw deafult deny incoming"
+echo "    sudo ufw default allow outgoing"
+echo "    sudo ufw --force enable"
