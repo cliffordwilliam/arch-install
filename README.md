@@ -105,3 +105,7 @@ sudo ufw deafult deny incoming
 sudo ufw default allow outgoing
 sudo ufw --force enable
 ```
+
+do not forget to unmute too
+
+amixer sset Master 90% unmute
