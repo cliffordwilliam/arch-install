@@ -92,3 +92,18 @@ cp slstatus ~/.local/bin/
 Now `startx` again to start dwm again.
 
 You should see the battery percentage now.
+
+---
+
+if you use the opinionated Install.sh
+
+please remember after logging in to connect to the internet, and get ufw and enable it
+
+```bash
+pacman -Syu --noconfirm
+pacman -S --noconfirm ufw
+sudo systemctl enable ufw
+sudo ufw deafult deny incoming
+sudo ufw default allow outgoing
+sudo ufw --force enable
+```
