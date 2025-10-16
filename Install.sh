@@ -173,7 +173,7 @@ if ! sudo -u "$USERNAME" grep -q '.local/bin' /home/$USERNAME/.bashrc 2>/dev/nul
     echo 'export PATH="\$HOME/.local/bin:\$PATH"' >> /home/$USERNAME/.bashrc
 fi
 
-sudo -u "$USERNAME" bash <<EOSU
+sudo -u "$USERNAME" bash <<'EOSU'
 mkdir -p /home/$USERNAME/suckless
 cd /home/$USERNAME/suckless
 
