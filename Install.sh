@@ -161,7 +161,7 @@ echo "root:$ROOT_PASSWORD" | chpasswd
 systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
-pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama alsa-utils firefox git
+pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama alsa-utils firefox git ufw
 
 useradd -m -G wheel -s /bin/bash "$USERNAME"
 echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
