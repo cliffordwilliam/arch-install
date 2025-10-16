@@ -1,137 +1,175 @@
+How about this btw
+
 -- ~/.config/nvim/init.lua
--- Minimal Neovim IDE Configuration
--- Set leader key to space (like VSCode's Ctrl+Shift+P)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
--- Basic settings
-vim.opt.clipboard = "unnamedplus"    -- Yank to system with xclip installed
-vim.opt.number = true                -- Show line numbers
-vim.opt.ignorecase = true            -- Ignore case in search
-vim.opt.smartcase = true             -- Unless uppercase is used
-vim.opt.hlsearch = false             -- Don't highlight searches
-vim.opt.wrap = false                 -- No line wrap
-vim.opt.breakindent = true           -- Preserve indent on wrap
-vim.opt.tabstop = 4                  -- Tab width
-vim.opt.shiftwidth = 4               -- Indent width
-vim.opt.expandtab = true             -- Use spaces instead of tabs
-vim.opt.termguicolors = true         -- True color support
-vim.opt.signcolumn = "yes"           -- Always show sign column
--- Bootstrap lazy.nvim plugin manager
+
+vim.schedule(function()
+  vim.opt.clipboard = "unnamedplus"
+end)
+
+vim.opt.number = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.hlsearch = false
+vim.opt.wrap = false
+vim.opt.breakindent = true
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.termguicolors = true
+vim.opt.signcolumn = "yes"
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",
-    lazypath,
-  })
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    error("Error cloning lazy.nvim:\n" .. out)
+  end
 end
 vim.opt.rtp:prepend(lazypath)
--- Plugin specifications
+
 require("lazy").setup({
-  -- Color scheme
   {
     "EdenEast/nightfox.nvim",
-    lazy = false,
     priority = 1000,
-    config = function()
-      vim.cmd([[colorscheme nightfox]])
+    init = function()
+      vim.cmd.colorscheme("nightfox")
     end,
   },
-  -- Fuzzy finder (like VSCode's Ctrl+P)
+
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
+    event = "VimEnter",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
     config = function()
-      require("telescope").setup()
+      require("telescope").setup({})
+
+      local builtin = require("telescope.builtin")
+      vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files" })
+      vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
     end,
   },
-  -- Syntax highlighting
+
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = { "lua", "python", "bash", "typescript", "javascript" },
-        highlight = { enable = true },
-        indent = { enable = true },
-      })
-    end,
+    main = "nvim-treesitter.configs",
+    opts = {
+      ensure_installed = { "lua", "python", "bash", "typescript", "javascript" },
+      auto_install = true,
+      highlight = { enable = true },
+      indent = { enable = true },
+    },
   },
-  -- LSP Configuration
+
   {
     "neovim/nvim-lspconfig",
     dependencies = {
       { "williamboman/mason.nvim", opts = {} },
       "williamboman/mason-lspconfig.nvim",
+      "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      -- Setup Mason to auto-install LSP servers
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
+        callback = function(event)
+          local map = function(keys, func, desc, mode)
+            mode = mode or "n"
+            vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
+          end
+
+          map("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
+          map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+          map("gI", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
+          map("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type [D]efinition")
+          map("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+          map("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+          map("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+          map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction", { "n", "x" })
+          map("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
+        end,
+      })
+
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
+
+      local servers = {
+        pylsp = {},
+        ts_ls = {},
+      }
+
       require("mason-lspconfig").setup({
-        ensure_installed = { "pylsp", "ts_ls" },
-      })
-      
-      -- Use new vim.lsp.config API (Neovim 0.11+)
-      vim.lsp.config.pylsp = {
-        cmd = { "pylsp" },
-        filetypes = { "python" },
-        root_markers = { "pyproject.toml", "setup.py", ".git" },
-      }
-      
-      -- needs: npm install -g typescript-language-server
-      vim.lsp.config.ts_ls = {
-        cmd = { "typescript-language-server", "--stdio" },
-        filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-        root_markers = { "package.json", "tsconfig.json", "jsconfig.json", ".git" },
-      }
-      
-      -- Auto-enable LSP for matching filetypes
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "python",
-        callback = function()
-          vim.lsp.enable("pylsp")
-        end,
-      })
-      
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-        callback = function()
-          vim.lsp.enable("ts_ls")
-        end,
+        ensure_installed = vim.tbl_keys(servers or {}),
+        handlers = {
+          function(server_name)
+            local server = servers[server_name] or {}
+            server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
+            require("lspconfig")[server_name].setup(server)
+          end,
+        },
       })
     end,
   },
-  -- Auto-completion
+
   {
     "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
     dependencies = {
+      {
+        "L3MON4D3/LuaSnip",
+        build = (function()
+          if vim.fn.has("win32") == 1 or vim.fn.executable("make") == 0 then
+            return
+          end
+          return "make install_jsregexp"
+        end)(),
+      },
+      "saadparwaiz1/cmp_luasnip",
       "hrsh7th/cmp-nvim-lsp",
-      "hrsh7th/cmp-buffer",
       "hrsh7th/cmp-path",
-      "L3MON4D3/LuaSnip",
+      "hrsh7th/cmp-buffer",
     },
     config = function()
       local cmp = require("cmp")
+      local luasnip = require("luasnip")
+      luasnip.config.setup({})
+
       cmp.setup({
         snippet = {
           expand = function(args)
-            require("luasnip").lsp_expand(args.body)
+            luasnip.lsp_expand(args.body)
           end,
         },
+        completion = { completeopt = "menu,menuone,noinsert" },
         mapping = cmp.mapping.preset.insert({
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-n>"] = cmp.mapping.select_next_item(),
+          ["<C-p>"] = cmp.mapping.select_prev_item(),
+          ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+          ["<C-f>"] = cmp.mapping.scroll_docs(4),
+          ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-Space>"] = cmp.mapping.complete({}),
+          ["<C-l>"] = cmp.mapping(function()
+            if luasnip.expand_or_locally_jumpable() then
+              luasnip.expand_or_jump()
+            end
+          end, { "i", "s" }),
+          ["<C-h>"] = cmp.mapping(function()
+            if luasnip.locally_jumpable(-1) then
+              luasnip.jump(-1)
+            end
+          end, { "i", "s" }),
         }),
         sources = {
           { name = "nvim_lsp" },
-          { name = "buffer" },
+          { name = "luasnip" },
           { name = "path" },
+          { name = "buffer" },
         },
       })
     end,
   },
 })
--- Key mappings (similar to VSCode shortcuts)
-vim.keymap.set("n", "<leader>ff", ":Telescope find_files<CR>", { desc = "Find files" })
-vim.keymap.set("n", "<leader>fg", ":Telescope live_grep<CR>", { desc = "Live grep" })
