@@ -100,7 +100,7 @@ if you use the opinionated Install.sh
 please remember after logging in to connect to the internet, and get ufw and enable it
 
 ```bash
-sudo systemctl enable ufw
+systemctl enable ufw
 sudo ufw deafult deny incoming
 sudo ufw default allow outgoing
 sudo ufw --force enable
