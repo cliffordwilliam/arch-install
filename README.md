@@ -100,8 +100,6 @@ if you use the opinionated Install.sh
 please remember after logging in to connect to the internet, and get ufw and enable it
 
 ```bash
-pacman -Syu --noconfirm
-pacman -S --noconfirm ufw
 sudo systemctl enable ufw
 sudo ufw deafult deny incoming
 sudo ufw default allow outgoing
