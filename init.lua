@@ -1,10 +1,8 @@
 -- ~/.config/nvim/init.lua
 -- Minimal Neovim IDE Configuration
-
 -- Set leader key to space (like VSCode's Ctrl+Shift+P)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-
 -- Basic settings
 vim.opt.clipboard = "unnamedplus"    -- Yank to system with xclip installed
 vim.opt.number = true                -- Show line numbers
@@ -18,7 +16,6 @@ vim.opt.shiftwidth = 4               -- Indent width
 vim.opt.expandtab = true             -- Use spaces instead of tabs
 vim.opt.termguicolors = true         -- True color support
 vim.opt.signcolumn = "yes"           -- Always show sign column
-
 -- Bootstrap lazy.nvim plugin manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
@@ -32,7 +29,6 @@ if not vim.loop.fs_stat(lazypath) then
   })
 end
 vim.opt.rtp:prepend(lazypath)
-
 -- Plugin specifications
 require("lazy").setup({
   -- Color scheme
@@ -44,7 +40,6 @@ require("lazy").setup({
       vim.cmd([[colorscheme nightfox]])
     end,
   },
-
   -- Fuzzy finder (like VSCode's Ctrl+P)
   {
     "nvim-telescope/telescope.nvim",
@@ -53,32 +48,46 @@ require("lazy").setup({
       require("telescope").setup()
     end,
   },
-
   -- Syntax highlighting
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
       require("nvim-treesitter.configs").setup({
-        ensure_installed = { "lua", "python", "bash" },
+        ensure_installed = { "lua", "python", "bash", "typescript", "javascript" },
         highlight = { enable = true },
         indent = { enable = true },
       })
     end,
   },
-
-  -- LSP Configuration (using built-in vim.lsp.config for Neovim 0.11+)
+  -- LSP Configuration
   {
     "neovim/nvim-lspconfig",
+    dependencies = {
+      { "williamboman/mason.nvim", opts = {} },
+      "williamboman/mason-lspconfig.nvim",
+    },
     config = function()
-      -- Setup Python LSP using new vim.lsp.config API
+      -- Setup Mason to auto-install LSP servers
+      require("mason-lspconfig").setup({
+        ensure_installed = { "pylsp", "ts_ls" },
+      })
+      
+      -- Use new vim.lsp.config API (Neovim 0.11+)
       vim.lsp.config.pylsp = {
         cmd = { "pylsp" },
         filetypes = { "python" },
         root_markers = { "pyproject.toml", "setup.py", ".git" },
       }
       
-      -- Enable LSP for Python files
+      -- needs: npm install -g typescript-language-server
+      vim.lsp.config.ts_ls = {
+        cmd = { "typescript-language-server", "--stdio" },
+        filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+        root_markers = { "package.json", "tsconfig.json", "jsconfig.json", ".git" },
+      }
+      
+      -- Auto-enable LSP for matching filetypes
       vim.api.nvim_create_autocmd("FileType", {
         pattern = "python",
         callback = function()
@@ -86,16 +95,14 @@ require("lazy").setup({
         end,
       })
       
-      -- Key mappings for LSP
-      vim.api.nvim_create_autocmd("LspAttach", {
-        callback = function(ev)
-          local opts = { buffer = ev.buf }
-          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+        callback = function()
+          vim.lsp.enable("ts_ls")
         end,
       })
     end,
   },
-
   -- Auto-completion
   {
     "hrsh7th/nvim-cmp",
@@ -125,7 +132,6 @@ require("lazy").setup({
     end,
   },
 })
-
 -- Key mappings (similar to VSCode shortcuts)
 vim.keymap.set("n", "<leader>ff", ":Telescope find_files<CR>", { desc = "Find files" })
 vim.keymap.set("n", "<leader>fg", ":Telescope live_grep<CR>", { desc = "Live grep" })
