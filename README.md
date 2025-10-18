@@ -107,7 +107,7 @@ please remember after logging in to connect to the internet, and get ufw and ena
 
 ```bash
 systemctl enable ufw
-sudo ufw deafult deny incoming
+sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw --force enable
 ```
