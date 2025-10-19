@@ -1,15 +1,21 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check internet first
-if ! ping -c1 archlinux.org &>/dev/null; then
-    echo "No internet connection!" >&2
-    exit 1
-fi
-
 # Must be root
 if [[ "$EUID" -ne 0 ]]; then
     echo "This script must be run as root." >&2
+    exit 1
+fi
+
+# Check basic network connectivity (IP level)
+if ! ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then
+    echo "No internet! (cannot reach 8.8.8.8)" >&2
+    exit 1
+fi
+
+# Check HTTP/HTTPS connectivity using a minimal, reliable endpoint
+if ! curl -sf --max-time 5 https://www.google.com/generate_204 >/dev/null; then
+    echo "Internet seems limited (HTTP/HTTPS blocked or site down)" >&2
     exit 1
 fi
 
