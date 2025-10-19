@@ -45,62 +45,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# --- User input ---
-lsblk -d -o NAME,SIZE,MODEL
-while true; do
-  read -p "Enter the target disk (e.g., /dev/nvme0n1 or /dev/sda): " DISK
-  [[ -b "$DISK" ]] && break
-  echo "Disk $DISK not found."
-done
-
-echo "You are about to wipe all data on $DISK"
-read -p "Type YES in all caps to continue: " CONFIRM
-if [[ "$CONFIRM" != "YES" ]]; then
-    echo "Aborting. (You must type YES in all caps)"
-    exit 1
-fi
-
+# User input
+lsblk -do NAME,SIZE,MODEL
+read -p "Enter the target DISK (/dev/nvme0n1): " DISK
 read -p "Enter hostname for the machine: " HOSTNAME
 read -p "Enter username: " USERNAME
-
-# Root password
-while true; do
-  read -s -p "Enter password for root user: " ROOT_PASSWORD
-  echo
-  read -s -p "Confirm password: " ROOT_PASSWORD_CONFIRM
-  echo
-  [[ "$ROOT_PASSWORD" == "$ROOT_PASSWORD_CONFIRM" ]] && break
-  echo "Passwords do not match. Try again."
-done
-
-# Regular user password
-while true; do
-  read -s -p "Enter password for $USERNAME: " USER_PASSWORD
-  echo
-  read -s -p "Confirm password: " USER_PASSWORD_CONFIRM
-  echo
-  [[ "$USER_PASSWORD" == "$USER_PASSWORD_CONFIRM" ]] && break
-  echo "Passwords do not match. Try again."
-done
-
-# Timezone
-while true; do
-  read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
-  [[ -f "/usr/share/zoneinfo/$TIMEZONE" ]] && break
-  echo "Invalid timezone."
-done
-
-# CPU vendor
-CPU_VENDOR=""
-while true; do
-  read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
-  CPU_VENDOR=${CPU_VENDOR,,}
-  [[ "$CPU_VENDOR" == "intel" || "$CPU_VENDOR" == "amd" ]] && break
-  echo "Enter 'intel' or 'amd'."
-done
+read -sp "Enter password for root user: " ROOT_PASSWORD
+read -sp "Enter password for $USERNAME: " USER_PASSWORD
+read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
+read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
 
 # Disk info
-lsblk -d -o NAME,SIZE,MODEL "$DISK"
+lsblk -do NAME,SIZE,MODEL "$DISK"
 DISK_SIZE=$(lsblk -b -dn -o SIZE "$DISK")
 DISK_SIZE_GB=$((DISK_SIZE / 1024 / 1024 / 1024))
 echo "Disk size: ${DISK_SIZE_GB} GB"
