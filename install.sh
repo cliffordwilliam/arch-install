@@ -45,6 +45,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Reminder to check disk and size
+read -p "Prompts here do not have validations, please type carefully. Have you noted your disk and size? Continue? [y/n]: " confirm
+if [[ "$confirm" == "y" ]]; then
+    echo "Proceeding..."
+else
+    echo "Aborting."
+    exit 1
+fi
+
 # User input
 lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
@@ -54,27 +63,10 @@ read -sp "Enter password for root user: " ROOT_PASSWORD
 read -sp "Enter password for $USERNAME: " USER_PASSWORD
 read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
 read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
+read -p "EFI size (MiB): " EFI_SIZE
+read -p "SWAP size (MiB): " SWAP_SIZE
 
-# Disk info
-lsblk -do NAME,SIZE,MODEL "$DISK"
-DISK_SIZE=$(lsblk -b -dn -o SIZE "$DISK")
-DISK_SIZE_GB=$((DISK_SIZE / 1024 / 1024 / 1024))
-echo "Disk size: ${DISK_SIZE_GB} GB"
-
-# Partition sizes
-while true; do
-  read -p "EFI size (MiB): " EFI_SIZE
-  read -p "SWAP size (MiB): " SWAP_SIZE
-  TOTAL_REQUESTED=$((EFI_SIZE + SWAP_SIZE))
-  AVAILABLE=$((DISK_SIZE_GB * 1024))
-  [[ $TOTAL_REQUESTED -lt $AVAILABLE ]] && break
-  echo "Partitions exceed disk size ($AVAILABLE MiB)."
-done
-
-read -p "Proceed to partition $DISK with these values? [y/N]: " confirm
-[[ "$confirm" == [yY] ]] || { echo "Aborting."; exit 1; }
-
-# --- Partition, format, mount ---
+# Partition, format, mount
 umount -R /mnt 2>/dev/null || true
 SWAP_PART=$(get_partition_name "$DISK" 2)
 swapoff "$SWAP_PART" 2>/dev/null || true
@@ -94,13 +86,13 @@ mount "$(get_partition_name "$DISK" 3)" /mnt
 mount --mkdir "$(get_partition_name "$DISK" 1)" /mnt/boot
 swapon "$(get_partition_name "$DISK" 2)"
 
-# --- Install base system ---
+# Install base system
 MICROCODE_PKG=$([[ "$CPU_VENDOR" == "intel" ]] && echo "intel-ucode" || echo "amd-ucode")
 pacstrap -K /mnt base linux linux-firmware "$MICROCODE_PKG" networkmanager sudo neovim
 
 genfstab -U /mnt > /mnt/etc/fstab
 
-# --- Chroot setup ---
+# Chroot setup
 arch-chroot /mnt /bin/bash <<EOF
 set -euo pipefail
 
