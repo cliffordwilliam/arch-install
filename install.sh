@@ -1,25 +1,21 @@
 #!/bin/bash
 set -euo pipefail
 
-# Must be root
 if [[ "$EUID" -ne 0 ]]; then
     echo "This script must be run as root." >&2
     exit 1
 fi
 
-# Must be UEFI booted
 if [[ ! -d /sys/firmware/efi ]]; then
     echo "System not booted in UEFI mode!" >&2
     exit 1
 fi
 
-# Check basic network connectivity (IP level)
 if ! ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then
     echo "No internet! (cannot reach 8.8.8.8)" >&2
     exit 1
 fi
 
-# Check HTTP/HTTPS connectivity using a minimal, reliable endpoint
 if ! curl -sf --max-time 5 https://www.google.com/generate_204 >/dev/null; then
     echo "Internet seems limited (HTTP/HTTPS blocked or site down)" >&2
     exit 1
@@ -45,16 +41,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Reminder to check disk and size
-read -p "Prompts here do not have validations, please type carefully. Have you noted your disk and size? Continue? [y/n]: " confirm
-if [[ "$confirm" == "y" ]]; then
-    echo "Proceeding..."
-else
-    echo "Aborting."
-    exit 1
-fi
-
-# User input
 lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
 read -p "Enter hostname for the machine: " HOSTNAME
@@ -66,10 +52,7 @@ read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
 read -p "EFI size (MiB): " EFI_SIZE
 read -p "SWAP size (MiB): " SWAP_SIZE
 
-# Partition, format, mount
-umount -R /mnt 2>/dev/null || true
-SWAP_PART=$(get_partition_name "$DISK" 2)
-swapoff "$SWAP_PART" 2>/dev/null || true
+cleanup
 
 parted --script "$DISK" \
   mklabel gpt \
