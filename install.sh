@@ -1,26 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ "$EUID" -ne 0 ]]; then
-    echo "This script must be run as root." >&2
-    exit 1
-fi
-
-if [[ ! -d /sys/firmware/efi ]]; then
-    echo "System not booted in UEFI mode!" >&2
-    exit 1
-fi
-
-if ! ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then
-    echo "No internet! (cannot reach 8.8.8.8)" >&2
-    exit 1
-fi
-
-if ! curl -sf --max-time 5 https://www.google.com/generate_204 >/dev/null; then
-    echo "Internet seems limited (HTTP/HTTPS blocked or site down)" >&2
-    exit 1
-fi
-
 get_partition_name() {
   local disk=$1
   local part_num=$2
