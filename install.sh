@@ -77,7 +77,10 @@ systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
 
-pacman -S --noconfirm base-devel xorg xfce4 firefox alsa-utils git ufw
+pacman -S --noconfirm base-devel xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
+    firefox pulseaudio pavucontrol git ufw thunar-archive-plugin file-roller
+
+systemctl enable lightdm
 
 systemctl enable ufw
 ufw default deny incoming
