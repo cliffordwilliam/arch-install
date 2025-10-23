@@ -21,7 +21,7 @@ bash pre-install.sh
 
 or you can just do this immeditalte, this is for node btw but i mean you can use bash immediately
 
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+bash <(curl -s https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/install.sh)
 
 say when you want to use the Install.sh
 ```
