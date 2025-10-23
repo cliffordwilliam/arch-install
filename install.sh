@@ -19,18 +19,19 @@ cleanup() {
         swapoff "$SWAP_PART" 2>/dev/null || true
     fi
 }
+
 trap cleanup EXIT
 
 lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
-read -p "Enter hostname for the machine: " HOSTNAME
-read -p "Enter username: " USERNAME
+read -p "Enter hostname for the machine (bob): " HOSTNAME
+read -p "Enter username (cliff): " USERNAME
 read -sp "Enter password for root user: " ROOT_PASSWORD
 read -sp "Enter password for $USERNAME: " USER_PASSWORD
 read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
 read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
-read -p "EFI size (MiB): " EFI_SIZE
-read -p "SWAP size (MiB): " SWAP_SIZE
+read -p "EFI size (1024 MiB): " EFI_SIZE
+read -p "SWAP size (8192 MiB): " SWAP_SIZE
 
 cleanup
 
@@ -49,13 +50,11 @@ mount "$(get_partition_name "$DISK" 3)" /mnt
 mount --mkdir "$(get_partition_name "$DISK" 1)" /mnt/boot
 swapon "$(get_partition_name "$DISK" 2)"
 
-# Install base system
 MICROCODE_PKG=$([[ "$CPU_VENDOR" == "intel" ]] && echo "intel-ucode" || echo "amd-ucode")
 pacstrap -K /mnt base linux linux-firmware "$MICROCODE_PKG" networkmanager sudo neovim
 
 genfstab -U /mnt > /mnt/etc/fstab
 
-# Chroot setup
 arch-chroot /mnt /bin/bash <<EOF
 set -euo pipefail
 
@@ -78,43 +77,20 @@ echo "root:$ROOT_PASSWORD" | chpasswd
 systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
-pacman -S --noconfirm base-devel xorg xorg-xinit libx11 libxft libxinerama alsa-utils firefox git ufw
+
+pacman -S --noconfirm base-devel xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
+    firefox pulseaudio pavucontrol git ufw thunar-archive-plugin file-roller
+
+systemctl enable lightdm
+
+systemctl enable ufw
+ufw default deny incoming
+ufw default allow outgoing
 
 useradd -m -G wheel -s /bin/bash "$USERNAME"
-echo "%wheel ALL=(ALL) ALL" > /etc/sudoers.d/wheel
+echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/wheel
 chmod 440 /etc/sudoers.d/wheel
 echo "$USERNAME:$USER_PASSWORD" | chpasswd
-
-sudo -u "$USERNAME" mkdir -p /home/$USERNAME/.local/bin
-if ! sudo -u "$USERNAME" grep -q '.local/bin' /home/$USERNAME/.bashrc 2>/dev/null; then
-    echo 'export PATH="\$HOME/.local/bin:\$PATH"' >> /home/$USERNAME/.bashrc
-fi
-
-sudo -u "$USERNAME" bash <<'EOSU'
-mkdir -p /home/$USERNAME/suckless
-cd /home/$USERNAME/suckless
-
-for repo in dwm st dmenu slstatus; do
-    rm -rf "\$repo"
-    git clone --depth 1 "https://git.suckless.org/\$repo"
-    cd "\$repo"
-    make
-    case "\$repo" in
-        dmenu)
-            cp dmenu dmenu_run dmenu_path stest /home/$USERNAME/.local/bin/
-            ;;
-        *)
-            cp "\$repo" /home/$USERNAME/.local/bin/
-            ;;
-    esac
-    cd ..
-done
-
-if [[ ! -f /home/$USERNAME/.xinitrc ]]; then
-    echo "slstatus &" >> /home/$USERNAME/.xinitrc
-    echo "exec dwm" >> /home/$USERNAME/.xinitrc
-fi
-EOSU
 
 pacman -S --noconfirm grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
@@ -122,10 +98,4 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
 
-echo "Installation complete. Login as $USERNAME and run: startx"
-echo "⚠️  IMPORTANT: Firewall was NOT enabled."
-echo "    After logging in, you can enable ufw manually with:"
-echo "    systemctl enable ufw"
-echo "    sudo ufw default deny incoming"
-echo "    sudo ufw default allow outgoing"
-echo "    sudo ufw --force enable"
+echo "Installation complete!"
