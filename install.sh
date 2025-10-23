@@ -23,15 +23,15 @@ cleanup() {
 trap cleanup EXIT
 
 lsblk -do NAME,SIZE,MODEL
-read -p "Enter the target DISK (/dev/nvme0n1): " DISK
-read -p "Enter hostname for the machine (bob): " HOSTNAME
-read -p "Enter username (cliff): " USERNAME
-read -sp "Enter password for root user: " ROOT_PASSWORD
-read -sp "Enter password for $USERNAME: " USER_PASSWORD
-read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
-read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICROCODE_PKG
-read -p "EFI size (1024 MiB): " EFI_SIZE
-read -p "SWAP size (8192 MiB): " SWAP_SIZE
+read -p "Enter the target DISK (/dev/nvme0n1): " DISK < /dev/tty
+read -p "Enter hostname for the machine (bob): " HOSTNAME < /dev/tty
+read -p "Enter username (cliff): " USERNAME < /dev/tty
+read -sp "Enter password for root user: " ROOT_PASSWORD < /dev/tty
+read -sp "Enter password for $USERNAME: " USER_PASSWORD < /dev/tty
+read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE < /dev/tty
+read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICROCODE_PKG < /dev/tty
+read -p "EFI size (1024 MiB): " EFI_SIZE < /dev/tty
+read -p "SWAP size (8192 MiB): " SWAP_SIZE < /dev/tty
 
 cleanup
 
