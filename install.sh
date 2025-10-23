@@ -29,7 +29,7 @@ read -p "Enter username (cliff): " USERNAME
 read -sp "Enter password for root user: " ROOT_PASSWORD
 read -sp "Enter password for $USERNAME: " USER_PASSWORD
 read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
-read -p "Is your CPU Intel or AMD? (intel/amd): " CPU_VENDOR
+read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICROCODE_PKG
 read -p "EFI size (1024 MiB): " EFI_SIZE
 read -p "SWAP size (8192 MiB): " SWAP_SIZE
 
@@ -50,7 +50,6 @@ mount "$(get_partition_name "$DISK" 3)" /mnt
 mount --mkdir "$(get_partition_name "$DISK" 1)" /mnt/boot
 swapon "$(get_partition_name "$DISK" 2)"
 
-MICROCODE_PKG=$([[ "$CPU_VENDOR" == "intel" ]] && echo "intel-ucode" || echo "amd-ucode")
 pacstrap -K /mnt base linux linux-firmware "$MICROCODE_PKG" networkmanager sudo neovim
 
 genfstab -U /mnt > /mnt/etc/fstab
@@ -78,10 +77,7 @@ systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
 
-pacman -S --noconfirm base-devel xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
-    firefox pulseaudio pavucontrol git ufw thunar-archive-plugin file-roller
-
-systemctl enable lightdm
+pacman -S --noconfirm base-devel xorg xfce4 firefox alsa-utils git ufw
 
 systemctl enable ufw
 ufw default deny incoming
