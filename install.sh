@@ -26,7 +26,6 @@ lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
 read -p "Enter hostname for the machine (bob): " HOSTNAME
 read -p "Enter username (cliff): " USERNAME
-read -sp "Enter password for root user: " ROOT_PASSWORD
 read -sp "Enter password for $USERNAME: " USER_PASSWORD
 read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
 read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICROCODE_PKG
@@ -71,7 +70,7 @@ cat <<EOL > /etc/hosts
 127.0.1.1   $HOSTNAME.localdomain $HOSTNAME
 EOL
 
-echo "root:$ROOT_PASSWORD" | chpasswd
+passwd -l root
 
 systemctl enable NetworkManager
 
@@ -80,7 +79,6 @@ pacman -Syu --noconfirm
 pacman -S --noconfirm base-devel xorg xorg-xinit i3 i3status dmenu \
     alacritty qutebrowser alsa-utils ufw git
 
-systemctl enable lightdm
 systemctl enable ufw
 ufw default deny incoming
 ufw default allow outgoing
