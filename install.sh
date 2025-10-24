@@ -77,11 +77,10 @@ systemctl enable NetworkManager
 
 pacman -Syu --noconfirm
 
-pacman -S --noconfirm base-devel xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter \
-    firefox pulseaudio pavucontrol git ufw thunar-archive-plugin file-roller
+pacman -S --noconfirm base-devel xorg xorg-xinit i3 i3status dmenu \
+    alacritty qutebrowser alsa-utils ufw git
 
 systemctl enable lightdm
-
 systemctl enable ufw
 ufw default deny incoming
 ufw default allow outgoing
@@ -94,6 +93,10 @@ echo "$USERNAME:$USER_PASSWORD" | chpasswd
 pacman -S --noconfirm grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
+
+sudo -u "$USERNAME" bash <<'EOC'
+echo 'exec i3' > ~/.xinitrc
+EOC
 
 EOF
 
