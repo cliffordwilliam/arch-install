@@ -1,5 +1,4 @@
 vim.g.mapleader = " "
-vim.g.maplocalleader = " "
 
 vim.schedule(function()
   vim.opt.clipboard = "unnamedplus"
