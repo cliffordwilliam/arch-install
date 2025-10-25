@@ -29,14 +29,6 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   {
-    "EdenEast/nightfox.nvim",
-    priority = 1000,
-    init = function()
-      vim.cmd.colorscheme("nightfox")
-    end,
-  },
-
-  {
     "nvim-telescope/telescope.nvim",
     event = "VimEnter",
     dependencies = {
