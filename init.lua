@@ -87,7 +87,6 @@ require("lazy").setup({
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
     dependencies = {
-      "saadparwaiz1/cmp_luasnip",
       "hrsh7th/cmp-nvim-lsp",
       "hrsh7th/cmp-path",
       "hrsh7th/cmp-buffer",
@@ -108,8 +107,6 @@ require("lazy").setup({
         }),
         sources = {
           { name = "nvim_lsp" },
-          { name = "path" },
-          { name = "buffer" },
         },
       })
     end,
