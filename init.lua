@@ -64,19 +64,11 @@ require("lazy").setup({
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
 
-      local servers = {
-        pylsp = {},
-        ts_ls = {},
-        clangd = {},
-      }
-
       require("mason-lspconfig").setup({
-        ensure_installed = vim.tbl_keys(servers),
+        ensure_installed = { "pylsp", "ts_ls", "clangd" },
         handlers = {
           function(server_name)
-            local server = servers[server_name]
-            server.capabilities = capabilities
-            require("lspconfig")[server_name].setup(server)
+            require("lspconfig")[server_name].setup({ capabilities = capabilities })
           end,
         },
       })
