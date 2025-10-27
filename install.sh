@@ -11,7 +11,6 @@ get_partition_name() {
   fi
 }
 
-lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
 read -p "Enter hostname for the machine (bob): " HOSTNAME
 read -p "Enter username (cliff): " USERNAME
