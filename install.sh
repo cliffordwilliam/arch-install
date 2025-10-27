@@ -11,17 +11,6 @@ get_partition_name() {
   fi
 }
 
-cleanup() {
-    echo "Cleaning up..."
-    umount -R /mnt 2>/dev/null || true
-    if [[ -n "${DISK:-}" && -b "$DISK" ]]; then
-        SWAP_PART=$(get_partition_name "$DISK" 2)
-        swapoff "$SWAP_PART" 2>/dev/null || true
-    fi
-}
-
-trap cleanup EXIT
-
 lsblk -do NAME,SIZE,MODEL
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
 read -p "Enter hostname for the machine (bob): " HOSTNAME
@@ -32,7 +21,11 @@ read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICR
 read -p "EFI size (1024 MiB): " EFI_SIZE
 read -p "SWAP size (8192 MiB): " SWAP_SIZE
 
-cleanup
+umount -R /mnt 2>/dev/null || true
+if [[ -n "${DISK:-}" && -b "$DISK" ]]; then
+    SWAP_PART=$(get_partition_name "$DISK" 2)
+    swapoff "$SWAP_PART" 2>/dev/null || true
+fi
 
 parted --script "$DISK" \
   mklabel gpt \
