@@ -45,10 +45,8 @@ require("lazy").setup({
           vim.keymap.set("n", "gd", require("telescope.builtin").lsp_definitions, { buffer = event.buf })
         end,
       })
-
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
-
       require("mason-lspconfig").setup({
         ensure_installed = { "pylsp", "ts_ls", "clangd" },
         handlers = {
