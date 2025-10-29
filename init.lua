@@ -1,17 +1,5 @@
 vim.g.mapleader = " "
 
-vim.schedule(function()
-  vim.opt.clipboard = "unnamedplus"
-end)
-
-vim.opt.number = true
-vim.opt.ignorecase = true
-vim.opt.smartcase = true
-vim.opt.wrap = false
-vim.opt.tabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
   local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", "https://github.com/folke/lazy.nvim.git", lazypath })
@@ -34,7 +22,6 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>fg", require("telescope.builtin").live_grep)
     end,
   },
-
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
@@ -42,10 +29,8 @@ require("lazy").setup({
     opts = {
       auto_install = true,
       highlight = { enable = true },
-      indent = { enable = true },
     },
   },
-
   {
     "neovim/nvim-lspconfig",
     dependencies = {
@@ -74,7 +59,6 @@ require("lazy").setup({
       })
     end,
   },
-
   {
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
