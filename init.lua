@@ -1,4 +1,11 @@
 vim.g.mapleader = " "
+vim.opt.number = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.wrap = false
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
@@ -29,6 +36,7 @@ require("lazy").setup({
     opts = {
       auto_install = true,
       highlight = { enable = true },
+      indent = { enable = true },
     },
   },
   {
