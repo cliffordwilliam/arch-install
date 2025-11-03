@@ -51,6 +51,9 @@ require("lazy").setup({
         group = vim.api.nvim_create_augroup("my-lsp", { clear = true }),
         callback = function(event)
           vim.keymap.set("n", "gd", require("telescope.builtin").lsp_definitions, { buffer = event.buf })
+          vim.keymap.set("n", "gl", vim.diagnostic.open_float, { buffer = event.buf })
+          vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { buffer = event.buf })
+          vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { buffer = event.buf })
         end,
       })
       local capabilities = vim.lsp.protocol.make_client_capabilities()
