@@ -1,6 +1,6 @@
 # 🧪 Automated Arch Linux Installer
 
-Just run the script and it does everything for you.
+Just run the `install.sh` script and it does everything for you.
 
 ## ⚠️ Warning
 
@@ -12,19 +12,13 @@ Check the script and edit the content before running it as needed.
 
 1. Boot from the official [Arch ISO](https://archlinux.org/download/).
 2. Connect to the internet.
-3. Run preinstall in live env, run postinstall after logging in:
 
 ```bash
-curl -O https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/pre-install.sh
-curl -O https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/post-install.sh
-bash pre-install.sh
-
-or you can just do this immeditalte, this is for node btw but i mean you can use bash immediately
-
 bash <(curl -s https://raw.githubusercontent.com/cliffordwilliam/arch-install/main/install.sh)
-
-say when you want to use the Install.sh
 ```
+
+3. Reboot.
+4. Login.
 
 ## Connect to internet in live env
 
@@ -50,68 +44,8 @@ nmtui
 1. pick "Activate a connection"
 2. pick "Quit"
 
-## After postinstall
+## After login
 
 ```bash
-startx to start ui
+startx
 ```
-
-## Different machine different battery reference, this is how you check for Linux
-
-```bash
-for b in /sys/class/power_supply/*; do     if grep -q "Battery" "$b/type" 2>/dev/null; then         basename "$b";     fi; done
-```
-
-Given that battery is BAT0.
-
-Make sure you first exit dwm, since we cannot cp to build of the slstatus if its running.
-
-```bash
-alt + shift + Q
-```
-
-Enter the repo we cloned from post install.
-
-```bash
-cd ~/suckless/slstatus
-```
-
-Then edit the `config.h`, add new `battery_perc`.
-
-```config.h
-static const struct arg args[] = {
-        /* function format          argument */
-        { datetime, "%s",           "%F %T" },
-        { battery_state, " %s", "BAT0" },
-        { battery_perc, " %s%%", "BAT0" },
-};
-```
-
-Save the file and rebuild and copy build to `~/.local/bin/`.
-
-```bash
-make clean
-make
-cp slstatus ~/.local/bin/
-```
-
-Now `startx` again to start dwm again.
-
-You should see the battery percentage now.
-
----
-
-if you use the opinionated Install.sh
-
-please remember after logging in to connect to the internet, and get ufw and enable it
-
-```bash
-systemctl enable ufw
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw --force enable
-```
-
-do not forget to unmute too
-
-amixer sset Master 90% unmute
