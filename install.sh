@@ -12,11 +12,11 @@ get_partition_name() {
 }
 
 read -p "Enter the target DISK (/dev/nvme0n1): " DISK
-read -p "Enter hostname for the machine (bob): " HOSTNAME
+read -p "Enter hostname for the machine (asd): " HOSTNAME
 read -p "Enter username (cliff): " USERNAME
 read -sp "Enter password for $USERNAME: " USER_PASSWORD
-read -p "Enter timezone (e.g., Asia/Jakarta): " TIMEZONE
-read -p "Is your microcode package Intel or AMD? (intel-ucode/amd-ucode): " MICROCODE_PKG
+read -p "Enter timezone (Asia/Jakarta): " TIMEZONE
+read -p "Enter your microcode package? (intel-ucode/amd-ucode): " MICROCODE_PKG
 read -p "EFI size (1024 MiB): " EFI_SIZE
 read -p "SWAP size (8192 MiB): " SWAP_SIZE
 
@@ -69,8 +69,8 @@ systemctl enable NetworkManager
 pacman -Syu --noconfirm
 
 pacman -S --noconfirm base-devel xorg xorg-xinit i3 i3status dmenu \
-    alacritty qutebrowser alsa-utils ufw git xclip \
-    noto-fonts noto-fonts-emoji fontconfig
+    alacritty qutebrowser alsa-utils ufw git tmux \
+    noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra fontconfig
 
 systemctl enable ufw
 ufw default deny incoming
