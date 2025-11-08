@@ -2,15 +2,11 @@
 
 Just run the `install.sh` script and it does everything for you.
 
-## ⚠️ Warning
-
-Check the script and edit the content before running it as needed.
-
 ---
 
 ## 🚀 How to Use
 
-1. Boot from the official [Arch ISO](https://archlinux.org/download/).
+1. Get and boot from the official [Arch ISO](https://archlinux.org/download/).
 2. Connect to the internet.
 
 ```bash
@@ -19,6 +15,7 @@ bash <(curl -s https://raw.githubusercontent.com/cliffordwilliam/arch-install/ma
 
 3. Reboot.
 4. Login.
+5. `startx`
 
 ## Connect to internet in live env
 
@@ -43,9 +40,3 @@ nmtui
 
 1. pick "Activate a connection"
 2. pick "Quit"
-
-## After login
-
-```bash
-startx
-```
