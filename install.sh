@@ -69,7 +69,7 @@ systemctl enable NetworkManager
 pacman -Syu --noconfirm
 
 pacman -S --noconfirm base-devel xorg xorg-xinit i3 i3status dmenu \
-    kitty qutebrowser alsa-utils ufw git github-cli tmux \
+    ghostty qutebrowser alsa-utils ufw git github-cli \
     noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra fontconfig
 
 systemctl enable ufw
